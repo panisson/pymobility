@@ -1,0 +1,21 @@
+Description
+-----------
+This is a python library to fast simulation some well-know mobility models:
+- Random Walk
+- Random Waypoint
+- Random Direction
+- Truncated Levy Walk
+Dependencies: NumPy and Matplotlib
+
+Contributing
+------------
+If you have a Github account please fork the repository,
+create a topic branch, and commit your changes.
+Then submit a pull request from that branch.
+
+License
+-------
+Written by André Panisson <panisson@gmail.com>
+Copyright (C) 2012 Istituto per l'Interscambio Scientifico I.S.I.
+You can contact us by email (isi@isi.it) or write to:
+ISI Foundation, Viale S. Severo 65, 10133 Torino, Italy. 
