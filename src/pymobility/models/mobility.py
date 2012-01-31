@@ -214,11 +214,3 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
 
         yield x,y
 
-def random_contact(nr_nodes):
-    a = np.array(range(nr_nodes))
-    while True:
-        i = np.random.randint(nr_nodes)
-        j = i
-        while j==i:
-            j = np.random.randint(nr_nodes)
-        yield a[i], a[j]
