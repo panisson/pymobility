@@ -214,3 +214,43 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
 
         yield x,y
 
+
+def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
+    
+    MAX_X, MAX_Y = dimensions
+    NODES = np.arange(nr_nodes)
+    x = U(0, MAX_X, NODES)
+    y = U(0, MAX_Y, NODES)
+    velocity =  np.zeros(nr_nodes)+velocity_mean
+    theta = U(0, 2*np.pi, NODES)
+    angle_mean = theta
+    
+    while True:
+
+        x = x + velocity * np.cos(theta)
+        y = y + velocity * np.sin(theta)
+        
+        # node bounces on the margins
+        b = np.where(x<0)[0]
+        x[b] = - x[b]; theta[b] = np.pi-theta[b]; angle_mean[b] = np.pi-angle_mean[b]
+        b = np.where(x>MAX_X)[0]
+        x[b] = 2*MAX_X - x[b]; theta[b] = np.pi-theta[b]; angle_mean[b] = np.pi-angle_mean[b]
+        b = np.where(y<0)[0]
+        y[b] = - y[b]; theta[b] = -theta[b]; angle_mean[b] = -angle_mean[b]
+        b = np.where(y>MAX_Y)[0]
+        y[b] = 2*MAX_Y - y[b]; theta[b] = -theta[b]; angle_mean[b] = -angle_mean[b]
+        
+        # calculate new speed and direction based on the model
+        velocity = (alpha * velocity +
+                    (1.0 - alpha) * velocity_mean +
+                    np.sqrt(1.0 - alpha * alpha)
+                      * np.random.normal(0.0, 1.0, nr_nodes)
+                      * variance)
+    
+        theta = (alpha * theta +
+                    (1.0 - alpha) * angle_mean +
+                    np.sqrt(1.0 - alpha * alpha)
+                      * np.random.normal(0.0, 1.0, nr_nodes)
+                      * variance)
+        
+        yield x,y
