@@ -216,6 +216,30 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
 
 
 def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
+    '''
+    Gauss-Markov Mobility Model, as proposed in 
+    Camp, T., Boleng, J. & Davies, V. A survey of mobility models for ad hoc network research. 
+    Wireless Communications and Mobile Computing 2, 483-502 (2002).
+    
+    Required arguments:
+    
+      *nr_nodes*:
+        Integer, the number of nodes.
+      
+      *dimensions*:
+        Tuple of Integers, the x and y dimensions of the simulation area.
+        
+    keyword arguments:
+    
+      *velocity_mean*:
+        The mean velocity
+        
+      *alpha*:
+        The tuning parameter used to vary the randomness
+        
+      *variance*:
+        The randomness variance
+    '''
     
     MAX_X, MAX_Y = dimensions
     NODES = np.arange(nr_nodes)
@@ -224,6 +248,9 @@ def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
     velocity =  np.zeros(nr_nodes)+velocity_mean
     theta = U(0, 2*np.pi, NODES)
     angle_mean = theta
+    
+    alpha2 = 1.0 - alpha
+    alpha3 = np.sqrt(1.0 - alpha * alpha) * variance
     
     while True:
 
@@ -242,15 +269,11 @@ def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
         
         # calculate new speed and direction based on the model
         velocity = (alpha * velocity +
-                    (1.0 - alpha) * velocity_mean +
-                    np.sqrt(1.0 - alpha * alpha)
-                      * np.random.normal(0.0, 1.0, nr_nodes)
-                      * variance)
+                    alpha2 * velocity_mean +
+                    alpha3 * np.random.normal(0.0, 1.0, nr_nodes))
     
         theta = (alpha * theta +
-                    (1.0 - alpha) * angle_mean +
-                    np.sqrt(1.0 - alpha * alpha)
-                      * np.random.normal(0.0, 1.0, nr_nodes)
-                      * variance)
+                    alpha2 * angle_mean +
+                    alpha3 * np.random.normal(0.0, 1.0, nr_nodes))
         
         yield x,y

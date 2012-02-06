@@ -5,6 +5,7 @@ This is a python library to fast simulation some well-know mobility models:
 - Random Waypoint
 - Random Direction
 - Truncated Levy Walk
+- Gauss-Markov
 Dependencies: NumPy and Matplotlib
 
 Contributing
