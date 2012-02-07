@@ -6,7 +6,7 @@
 #
 #  This program was written by André Panisson <panisson@gmail.com>
 #
-from pymobility.models.mobility import gauss_markov
+from pymobility.models.mobility import gauss_markov, reference_point_group
 '''
 Created on Jan 24, 2012
 
@@ -33,7 +33,7 @@ MIN_V, MAX_V = 0.1, 1.
 MAX_WT = 100.
 RANGE = 1.
 
-STEPS_TO_IGNORE = 0#10000
+STEPS_TO_IGNORE = 20000
 
 trace_file = file("/tmp/trace.txt", 'w')
 
@@ -66,7 +66,10 @@ step = 0
 #for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
 #for x,y in random_waypoint(nr_nodes, dimensions=(MAX_X, MAX_Y), velocity=(MIN_V, MAX_V), wt_max=MAX_WT):
 #for x,y in random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
-for x,y in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
+#for x,y in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
+groups = [4 for _ in range(10)]
+nr_nodes = sum(groups)
+for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.02):
     
     step += 1
     if step%10000==0: logger.info('Step %s'% step)
