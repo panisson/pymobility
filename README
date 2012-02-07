@@ -1,6 +1,6 @@
 Description
 -----------
-This is a python library to fast simulation some well-know mobility models:
+This is a python library to simulation of some well-know mobility models:
 - Random Walk
 - Random Waypoint
 - Random Direction
