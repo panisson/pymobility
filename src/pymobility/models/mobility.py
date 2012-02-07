@@ -389,8 +389,8 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
         g_arrived = np.where(np.logical_and(g_velocity>0., g_fl<=0.))[0]
         
         g_theta = U(0, 2*np.pi, g_arrived)
-        g_costheta[arrived] = np.cos(g_theta)
-        g_sintheta[arrived] = np.sin(g_theta)
+        g_costheta[g_arrived] = np.cos(g_theta)
+        g_sintheta[g_arrived] = np.sin(g_theta)
         g_fl[g_arrived] = FL_DISTR(g_arrived)
         g_velocity[g_arrived] = VELOCITY_DISTR(fl[g_arrived])
 
