@@ -332,8 +332,7 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
     MAX_X, MAX_Y = dimensions
     x = U(0, MAX_X, NODES)
     y = U(0, MAX_Y, NODES)
-    fl = np.ones(sum(nr_nodes))
-    velocity = VELOCITY_DISTR(fl)
+    velocity = 1.
     theta = U(0, 2*np.pi, NODES)
     costheta = np.cos(theta)
     sintheta = np.sin(theta)
@@ -353,8 +352,8 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
         for (i,g) in enumerate(groups):
             
             # step to group direction + step to group center
-            y_g = y[g]
             x_g = x[g]
+            y_g = y[g]
             c_theta = np.arctan2(np.average(y_g) - y_g, np.average(x_g) - x_g)
             
             x[g] = x_g + g_velocity[i] * g_costheta[i] + aggregation*np.cos(c_theta)
@@ -362,36 +361,36 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
             
         # node and group bounces on the margins
         b = np.where(x<0)[0]
-        x[b] = - x[b]; costheta[b] = -costheta[b]
-        g_idx = np.unique(g_ref[b]); g_costheta[g_idx] = -g_costheta[g_idx]
+        if b.size > 0:
+            x[b] = - x[b]; costheta[b] = -costheta[b]
+            g_idx = np.unique(g_ref[b]); g_costheta[g_idx] = -g_costheta[g_idx]
         b = np.where(x>MAX_X)[0]
-        x[b] = 2*MAX_X - x[b]; costheta[b] = -costheta[b]
-        g_idx = np.unique(g_ref[b]); g_costheta[g_idx] = -g_costheta[g_idx]
+        if b.size > 0:
+            x[b] = 2*MAX_X - x[b]; costheta[b] = -costheta[b]
+            g_idx = np.unique(g_ref[b]); g_costheta[g_idx] = -g_costheta[g_idx]
         b = np.where(y<0)[0]
-        y[b] = - y[b]; sintheta[b] = -sintheta[b]
-        g_idx = np.unique(g_ref[b]); g_sintheta[g_idx] = -g_sintheta[g_idx]
+        if b.size > 0:
+            y[b] = - y[b]; sintheta[b] = -sintheta[b]
+            g_idx = np.unique(g_ref[b]); g_sintheta[g_idx] = -g_sintheta[g_idx]
         b = np.where(y>MAX_Y)[0]
-        y[b] = 2*MAX_Y - y[b]; sintheta[b] = -sintheta[b]
-        g_idx = np.unique(g_ref[b]); g_sintheta[g_idx] = -g_sintheta[g_idx]
+        if b.size > 0:
+            y[b] = 2*MAX_Y - y[b]; sintheta[b] = -sintheta[b]
+            g_idx = np.unique(g_ref[b]); g_sintheta[g_idx] = -g_sintheta[g_idx]
 
-        # update info for arrived nodes
-        fl = fl - velocity
-        arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
-        
-        theta = U(0, 2*np.pi, arrived)
-        costheta[arrived] = np.cos(theta)
-        sintheta[arrived] = np.sin(theta)
-        fl[arrived] = np.ones(len(arrived))
-        velocity[arrived] = VELOCITY_DISTR(fl[arrived])
+        # update info for nodes
+        theta = U(0, 2*np.pi, NODES)
+        costheta = np.cos(theta)
+        sintheta = np.sin(theta)
         
         # update info for arrived groups
         g_fl = g_fl - g_velocity
         g_arrived = np.where(np.logical_and(g_velocity>0., g_fl<=0.))[0]
         
-        g_theta = U(0, 2*np.pi, g_arrived)
-        g_costheta[g_arrived] = np.cos(g_theta)
-        g_sintheta[g_arrived] = np.sin(g_theta)
-        g_fl[g_arrived] = FL_DISTR(g_arrived)
-        g_velocity[g_arrived] = VELOCITY_DISTR(fl[g_arrived])
+        if g_arrived.size > 0:
+            g_theta = U(0, 2*np.pi, g_arrived)
+            g_costheta[g_arrived] = np.cos(g_theta)
+            g_sintheta[g_arrived] = np.sin(g_theta)
+            g_fl[g_arrived] = FL_DISTR(g_arrived)
+            g_velocity[g_arrived] = VELOCITY_DISTR(g_fl[g_arrived])
 
         yield x,y
