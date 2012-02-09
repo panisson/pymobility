@@ -1,6 +1,8 @@
 Description
 -----------
-This is a python library to simulation of some mobility models that simulate node movements:
+This is a python library to simulation of mobility and contact models.
+
+The following mobility models that simulate node movements are available:
 
 - Random Walk
 - Random Waypoint
@@ -10,7 +12,8 @@ This is a python library to simulation of some mobility models that simulate nod
 - Reference Point Group
 
 In addition to models that simulate node position in time, this library also provides some models that simulate node contacts:
-The Random Contact model, that simulate random contacts in time, and the Model B, as described in [1].
+- The Random Contact model, that simulate random contacts in time
+- The Model B, as described in [1]
 
 Dependencies
 ------------
@@ -33,4 +36,4 @@ The Model B was implemented with the contribution of Juliette Stehle.
 
 References
 ----------
-[1] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. Physical Review E 81, 1-4 (2010).
+[1] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. Physical Review E 81, 1-4 (2010). Available online at: http://link.aps.org/doi/10.1103/PhysRevE.81.035101
