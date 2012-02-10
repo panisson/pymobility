@@ -101,10 +101,7 @@ def __update_state(i,b1,mu,PI,f,t,t_lc,partner,inactive_agents):
 
 def __contacts_list(partner):
     l = []
-    for i in range(len(partner)):
-        if len(partner[i])>0:
-            for k in partner[i]:
-                l.append((i,k))
+    for i in range(len(partner)): l.extend((i,k) for k in partner[i])
     return l
 
 ##################################### 
