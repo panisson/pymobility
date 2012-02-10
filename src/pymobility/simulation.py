@@ -6,7 +6,7 @@
 #
 #  This program was written by André Panisson <panisson@gmail.com>
 #
-from pymobility.models.mobility import gauss_markov, reference_point_group
+from pymobility.models.mobility import gauss_markov, reference_point_group, tvc
 '''
 Created on Jan 24, 2012
 
@@ -22,7 +22,8 @@ logging.basicConfig(format='%(asctime)-15s - %(message)s', level=logging.INFO)
 logger = logging.getLogger("simulation")
 
 DRAW = True
-CALCULATE_CONTACTS = True
+CALCULATE_CONTACTS = False
+TRACE_CONTACTS = False
 
 nr_nodes = 100
 MAX_X, MAX_Y = 100, 100
@@ -33,9 +34,10 @@ MIN_V, MAX_V = 0.1, 1.
 MAX_WT = 100.
 RANGE = 1.
 
-STEPS_TO_IGNORE = 20000
+STEPS_TO_IGNORE = 10000
 
-trace_file = file("/tmp/trace.txt", 'w')
+if TRACE_CONTACTS:
+    trace_file = file("/tmp/trace.txt", 'w')
 
 if DRAW:
     #import matplotlib
@@ -67,9 +69,15 @@ step = 0
 #for x,y in random_waypoint(nr_nodes, dimensions=(MAX_X, MAX_Y), velocity=(MIN_V, MAX_V), wt_max=MAX_WT):
 #for x,y in random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
 #for x,y in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
+
+# Reference Point Group model
+#groups = [4 for _ in range(10)]
+#nr_nodes = sum(groups)
+#for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.5):
+
 groups = [4 for _ in range(10)]
 nr_nodes = sum(groups)
-for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.02):
+for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100]):
     
     step += 1
     if step%10000==0: logger.info('Step %s'% step)
@@ -81,7 +89,8 @@ for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=
             d = np.sqrt(np.square(y-y[i]) + np.square(x-x[i]))
             contacts[i] = [n for n in np.where(d<RANGE)[0] if n!=i]
             
-        trace_file.write(str(contacts_list())+"\n")
+        if TRACE_CONTACTS:
+            trace_file.write(str(contacts_list())+"\n")
     
     if DRAW:
         
