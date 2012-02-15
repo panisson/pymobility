@@ -82,7 +82,7 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
 #        if i%100 == 0:
 #            print np.average(velocity)
 
-def random_walk(nr_nodes, dimensions, velocity=1., distance=1.):
+def random_walk(nr_nodes, dimensions, velocity=1., distance=1., border_policy='reflect'):
     if velocity>distance:
         # In this implementation, each step is 1 second,
         # it is not possible to have a velocity larger than the distance
@@ -94,7 +94,7 @@ def random_walk(nr_nodes, dimensions, velocity=1., distance=1.):
     FL_DISTR = lambda SAMPLES: np.array(fl[:len(SAMPLES)])
     VELOCITY_DISTR = lambda FD: np.array(vel[:len(FD)])
     
-    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR)
+    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, border_policy=border_policy)
 
 def truncated_levy_walk(nr_nodes, dimensions, FL_EXP=-2.6, FL_MAX=50., WT_EXP=-1.8, WT_MAX=100.):
     
@@ -133,7 +133,7 @@ def random_direction(nr_nodes, dimensions, wt_max=None, velocity=(0.1, 1.)):
     
     return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR)
 
-def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None):
+def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None, border_policy='reflect'):
     '''
     Base implementation for models with direction uniformly chosen from [0,pi]:
     random_direction, random_walk, truncated_levy_walk
@@ -167,6 +167,33 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
          to be used in the node pause.
         If WT_DISTR is 0 or None, there is no pause time.
     '''
+    def reflect(x,y):
+        # node bounces on the margins
+        b = np.where(x<0)[0]
+        x[b] = - x[b]; costheta[b] = -costheta[b]
+        b = np.where(x>MAX_X)[0]
+        x[b] = 2*MAX_X - x[b]; costheta[b] = -costheta[b]
+        b = np.where(y<0)[0]
+        y[b] = - y[b]; sintheta[b] = -sintheta[b]
+        b = np.where(y>MAX_Y)[0]
+        y[b] = 2*MAX_Y - y[b]; sintheta[b] = -sintheta[b]
+    
+    def wrap(x,y):
+        b = np.where(x<0)[0]
+        if b.size > 0: x[b] += MAX_X
+        b = np.where(x>MAX_X)[0]
+        if b.size > 0: x[b] -= MAX_X
+        b = np.where(y<0)[0]
+        if b.size > 0: y[b] += MAX_Y
+        b = np.where(y>MAX_Y)[0]
+        if b.size > 0: y[b] -= MAX_Y
+    
+    if border_policy == 'reflect':
+        borderp = reflect
+    elif border_policy == 'wrap':
+        borderp = wrap
+    else:
+        borderp = border_policy
     
     MAX_X, MAX_Y = dimensions
     NODES = np.arange(nr_nodes)
@@ -184,19 +211,17 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
         x = x + velocity * costheta
         y = y + velocity * sintheta
         
-        # node bounces on the margins
-        b = np.where(x<0)[0]
-        x[b] = - x[b]; costheta[b] = -costheta[b]
-        b = np.where(x>MAX_X)[0]
-        x[b] = 2*MAX_X - x[b]; costheta[b] = -costheta[b]
-        b = np.where(y<0)[0]
-        y[b] = - y[b]; sintheta[b] = -sintheta[b]
-        b = np.where(y>MAX_Y)[0]
-        y[b] = 2*MAX_Y - y[b]; sintheta[b] = -sintheta[b]
-
-        # update info for arrived nodes
         fl = fl - velocity
+        
+        # step back for nodes that surpassed fl
         arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
+        if arrived.size > 0:
+            diff = fl[arrived]
+            x[arrived] = x[arrived] + diff * costheta[arrived]
+            y[arrived] = y[arrived] + diff * sintheta[arrived]
+        
+        # apply border policy
+        borderp(x,y)
         
         if WT_DISTR:
             velocity[arrived] = 0.
@@ -205,12 +230,13 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
             wt[np.where(velocity==0.)[0]] -= 1.
             # update info for moving nodes
             arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
-            
-        theta = U(0, 2*np.pi, arrived)
-        costheta[arrived] = np.cos(theta)
-        sintheta[arrived] = np.sin(theta)
-        fl[arrived] = FL_DISTR(arrived)
-        velocity[arrived] = VELOCITY_DISTR(fl[arrived])
+        
+        if arrived.size > 0:
+            theta = U(0, 2*np.pi, arrived)
+            costheta[arrived] = np.cos(theta)
+            sintheta[arrived] = np.sin(theta)
+            fl[arrived] = FL_DISTR(arrived)
+            velocity[arrived] = VELOCITY_DISTR(fl[arrived])
 
         yield x,y
 
