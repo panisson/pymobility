@@ -17,12 +17,13 @@ Created on Jan 24, 2012
 import numpy as np
 from models import truncated_levy_walk, random_direction, random_waypoint, random_walk
 import logging
+from scipy.spatial.distance import cdist
 
 logging.basicConfig(format='%(asctime)-15s - %(message)s', level=logging.INFO)
 logger = logging.getLogger("simulation")
 
 DRAW = True
-CALCULATE_CONTACTS = False
+CALCULATE_CONTACTS = True
 TRACE_CONTACTS = False
 
 nr_nodes = 100
@@ -65,7 +66,7 @@ step = 0
 
 # UNCOMMENT THE MODEL YOU WANT TO USE
 #for x,y in truncated_levy_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
-#for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
+for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
 #for x,y in random_waypoint(nr_nodes, dimensions=(MAX_X, MAX_Y), velocity=(MIN_V, MAX_V), wt_max=MAX_WT):
 #for x,y in random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
 #for x,y in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
@@ -75,9 +76,9 @@ step = 0
 #nr_nodes = sum(groups)
 #for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.5):
 
-groups = [4 for _ in range(10)]
-nr_nodes = sum(groups)
-for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100]):
+#groups = [4 for _ in range(10)]
+#nr_nodes = sum(groups)
+#for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100]):
     
     step += 1
     if step%10000==0: logger.info('Step %s'% step)
@@ -85,9 +86,8 @@ for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[1
     
     if CALCULATE_CONTACTS:
         
-        for i in xrange(nr_nodes):
-            d = np.sqrt(np.square(y-y[i]) + np.square(x-x[i]))
-            contacts[i] = [n for n in np.where(d<RANGE)[0] if n!=i]
+        d = cdist(zip(x,y),zip(x,y))
+        c = zip(*np.where(d<RANGE))
             
         if TRACE_CONTACTS:
             trace_file.write(str(contacts_list())+"\n")
@@ -96,8 +96,7 @@ for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[1
         
         if CALCULATE_CONTACTS:
             lnr = 1
-            for i in xrange(nr_nodes):
-                for j in contacts[i]:
+            for (i,j) in c:
                     if j > i:
                         ax.lines[lnr].set_data([x[i],x[j]], [y[i],y[j]])
                         lnr += 1
