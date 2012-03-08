@@ -17,10 +17,10 @@ import numpy as np
 from numpy.random import rand
 
 # define a Uniform Distribution
-U = lambda MIN, MAX, SAMPLES: rand(len(SAMPLES)) * (MAX - MIN) + MIN
+U = lambda MIN, MAX, SAMPLES: rand(*SAMPLES.shape) * (MAX - MIN) + MIN
 
 # define a Truncated Power Law Distribution
-P = lambda ALPHA, MIN, MAX, SAMPLES: ((MAX ** (ALPHA+1.) - 1.) * rand(len(SAMPLES)) + 1.) ** (1./(ALPHA+1.))
+P = lambda ALPHA, MIN, MAX, SAMPLES: ((MAX ** (ALPHA+1.) - 1.) * rand(*SAMPLES.shape) + 1.) ** (1./(ALPHA+1.))
 
 def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     '''
@@ -77,7 +77,7 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
         y_waypoint[arrived] = U(0, MAX_Y, arrived)
         velocity[arrived] = U(MIN_V, MAX_V, arrived)
         
-        yield x,y
+        yield np.dstack((x,y))[0]
         
 #        if i%100 == 0:
 #            print np.average(velocity)
@@ -167,26 +167,34 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
          to be used in the node pause.
         If WT_DISTR is 0 or None, there is no pause time.
     '''
-    def reflect(x,y):
+    def reflect(xy):
         # node bounces on the margins
-        b = np.where(x<0)[0]
-        x[b] = - x[b]; costheta[b] = -costheta[b]
-        b = np.where(x>MAX_X)[0]
-        x[b] = 2*MAX_X - x[b]; costheta[b] = -costheta[b]
-        b = np.where(y<0)[0]
-        y[b] = - y[b]; sintheta[b] = -sintheta[b]
-        b = np.where(y>MAX_Y)[0]
-        y[b] = 2*MAX_Y - y[b]; sintheta[b] = -sintheta[b]
+        b = np.where(xy[:,0]<0)[0]
+        if b.size > 0:
+            xy[b,0] = - xy[b,0]
+            cosintheta[b,0] = -cosintheta[b,0]
+        b = np.where(xy[:,0]>MAX_X)[0]
+        if b.size > 0:
+            xy[b,0] = 2*MAX_X - xy[b,0]
+            cosintheta[b,0] = -cosintheta[b,0]
+        b = np.where(xy[:,1]<0)[0]
+        if b.size > 0:
+            xy[b,1] = - xy[b,1]
+            cosintheta[b,1] = -cosintheta[b,1]
+        b = np.where(xy[:,1]>MAX_Y)[0]
+        if b.size > 0:
+            xy[b,1] = 2*MAX_Y - xy[b,1]
+            cosintheta[b,1] = -cosintheta[b,1]
     
     def wrap(x,y):
-        b = np.where(x<0)[0]
-        if b.size > 0: x[b] += MAX_X
-        b = np.where(x>MAX_X)[0]
-        if b.size > 0: x[b] -= MAX_X
-        b = np.where(y<0)[0]
-        if b.size > 0: y[b] += MAX_Y
-        b = np.where(y>MAX_Y)[0]
-        if b.size > 0: y[b] -= MAX_Y
+        b = np.where(xy[:,0]<0)[0]
+        if b.size > 0: xy[:,0] += MAX_X
+        b = np.where(xy[:,0]>MAX_X)[0]
+        if b.size > 0: xy[:,0] -= MAX_X
+        b = np.where(xy[:,1]<0)[0]
+        if b.size > 0: xy[:,1] += MAX_Y
+        b = np.where(xy[:,1]>MAX_Y)[0]
+        if b.size > 0: xy[:,1] -= MAX_Y
     
     if border_policy == 'reflect':
         borderp = reflect
@@ -197,49 +205,43 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
     
     MAX_X, MAX_Y = dimensions
     NODES = np.arange(nr_nodes)
-    x = U(0, MAX_X, NODES)
-    y = U(0, MAX_Y, NODES)
+    xy = U(0, MAX_X, np.dstack((NODES,NODES))[0])
     fl = FL_DISTR(NODES)
     velocity = VELOCITY_DISTR(fl)
     theta = U(0, 2*np.pi, NODES)
-    costheta = np.cos(theta)
-    sintheta = np.sin(theta)
+    cosintheta = np.dstack((np.cos(theta), np.sin(theta)))[0] * np.dstack((velocity,velocity))[0]
     wt = np.zeros(nr_nodes)
     
     while True:
 
-        x = x + velocity * costheta
-        y = y + velocity * sintheta
-        
-        fl = fl - velocity
+        xy += cosintheta
+        fl -= velocity
         
         # step back for nodes that surpassed fl
         arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
         if arrived.size > 0:
-            diff = fl[arrived]
-            x[arrived] = x[arrived] + diff * costheta[arrived]
-            y[arrived] = y[arrived] + diff * sintheta[arrived]
+            diff = fl[arrived] / velocity[arrived]
+            xy[arrived] += np.dstack((diff,diff))[0] * cosintheta[arrived]
         
         # apply border policy
-        borderp(x,y)
+        borderp(xy)
         
         if WT_DISTR:
             velocity[arrived] = 0.
             wt[arrived] = WT_DISTR(arrived)
             # update info for paused nodes
             wt[np.where(velocity==0.)[0]] -= 1.
-            # update info for moving nodes
             arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
         
+        # update info for moving nodes
         if arrived.size > 0:
             theta = U(0, 2*np.pi, arrived)
-            costheta[arrived] = np.cos(theta)
-            sintheta[arrived] = np.sin(theta)
             fl[arrived] = FL_DISTR(arrived)
             velocity[arrived] = VELOCITY_DISTR(fl[arrived])
+            v = velocity[arrived]
+            cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
 
-        yield x,y
-
+        yield xy
 
 def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
     '''
@@ -302,7 +304,7 @@ def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
                     alpha2 * angle_mean +
                     alpha3 * np.random.normal(0.0, 1.0, nr_nodes))
         
-        yield x,y
+        yield np.dstack((x,y))[0]
         
 def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=0.1):
     '''
@@ -424,7 +426,7 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
             g_fl[g_arrived] = FL_DISTR(g_arrived)
             g_velocity[g_arrived] = VELOCITY_DISTR(g_fl[g_arrived])
 
-        yield x,y
+        yield np.dstack((x,y))[0]
         
 def tvc(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=[0.5,0.], epoch=[100,100]):
     '''
@@ -585,4 +587,4 @@ def tvc(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=[0.5,0.], epoch=[1
         costheta = np.cos(theta)
         sintheta = np.sin(theta)
         
-        yield x,y
+        yield np.dstack((x,y))[0]

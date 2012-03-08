@@ -63,22 +63,23 @@ if DRAW and CALCULATE_CONTACTS:
         ax.plot([], [], 'b-')
         
 step = 0
+np.random.seed(0xffff)
 
 # UNCOMMENT THE MODEL YOU WANT TO USE
-#for x,y in truncated_levy_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
-for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
-#for x,y in random_waypoint(nr_nodes, dimensions=(MAX_X, MAX_Y), velocity=(MIN_V, MAX_V), wt_max=MAX_WT):
-#for x,y in random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
-#for x,y in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
+#for xy in truncated_levy_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
+#for xy in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
+#for xy in random_waypoint(nr_nodes, dimensions=(MAX_X, MAX_Y), velocity=(MIN_V, MAX_V), wt_max=MAX_WT):
+for xy in random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y)):
+#for xy in gauss_markov(nr_nodes, dimensions=(MAX_X, MAX_Y), alpha=0.99):
 
-# Reference Point Group model
+## Reference Point Group model
 #groups = [4 for _ in range(10)]
 #nr_nodes = sum(groups)
-#for x,y in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.5):
+#for xy in reference_point_group(groups, dimensions=(MAX_X, MAX_Y), aggregation=0.5):
 
 #groups = [4 for _ in range(10)]
 #nr_nodes = sum(groups)
-#for x,y in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100]):
+#for xy in tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100]):
     
     step += 1
     if step%10000==0: logger.info('Step %s'% step)
@@ -86,8 +87,17 @@ for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
     
     if CALCULATE_CONTACTS:
         
-        d = cdist(zip(x,y),zip(x,y))
+#        d = np.zeros((nr_nodes, nr_nodes), dtype=np.double)
+#        for i in xrange(0, nr_nodes):
+#            for j in xrange(0, nr_nodes):
+#                d[i,j] = (abs(xy[i]-xy[j])**2.).sum() ** 0.5 # minkowski(XA[i:], XB[j:], p)
+        
+        d = cdist(xy,xy)
+        #print d
         c = zip(*np.where(d<RANGE))
+        
+#        if step == STEPS_TO_IGNORE*2:
+#            assert [(i,j) for (i,j) in c if i!=j] == [(0, 41), (14, 74), (41, 0), (74, 14)]
             
         if TRACE_CONTACTS:
             trace_file.write(str(contacts_list())+"\n")
@@ -98,11 +108,11 @@ for x,y in random_direction(nr_nodes, dimensions=(MAX_X, MAX_Y)):
             lnr = 1
             for (i,j) in c:
                     if j > i:
-                        ax.lines[lnr].set_data([x[i],x[j]], [y[i],y[j]])
+                        ax.lines[lnr].set_data([xy[i,0],xy[j,0]], [xy[i,1],xy[j,1]])
                         lnr += 1
             for i in xrange(lnr, 100):
                 ax.lines[i].set_data([],[])
         
-        line.set_data(x, y)
+        line.set_data(xy[:,0],xy[:,1])
         plt.draw()
     
