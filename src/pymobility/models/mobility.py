@@ -186,15 +186,15 @@ def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=Non
             xy[b,1] = 2*MAX_Y - xy[b,1]
             cosintheta[b,1] = -cosintheta[b,1]
     
-    def wrap(x,y):
+    def wrap(xy):
         b = np.where(xy[:,0]<0)[0]
-        if b.size > 0: xy[:,0] += MAX_X
+        if b.size > 0: xy[b,0] += MAX_X
         b = np.where(xy[:,0]>MAX_X)[0]
-        if b.size > 0: xy[:,0] -= MAX_X
+        if b.size > 0: xy[b,0] -= MAX_X
         b = np.where(xy[:,1]<0)[0]
-        if b.size > 0: xy[:,1] += MAX_Y
+        if b.size > 0: xy[b,1] += MAX_Y
         b = np.where(xy[:,1]>MAX_Y)[0]
-        if b.size > 0: xy[:,1] -= MAX_Y
+        if b.size > 0: xy[b,1] -= MAX_Y
     
     if border_policy == 'reflect':
         borderp = reflect
