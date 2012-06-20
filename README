@@ -20,6 +20,14 @@ Dependencies
 ------------
 NumPy and Matplotlib
 
+Examples
+--------
+The pymobility/simulation.py script, under the src directory, contains some examples on how to run each model.
+To run it on a Linux shell, install the dependencies, go to the src directory and run the following command:
+```bash
+export PYTHONPATH=. && python pymobility/simulation.py
+```
+
 Contributing
 ------------
 If you have a Github account please fork the repository,
