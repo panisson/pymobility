@@ -12,7 +12,8 @@ The following mobility models that simulate node movements are available:
 - Reference Point Group
 - Time-variant Community
 
-In addition to models that simulate node position in time, this library also provides some models that simulate node contacts:
+In addition to models that simulate node position in time, this library also provides some models 
+that simulate node contacts:
 - The Random Contact model, that simulate random contacts in time
 - The Model B, as described in [1]
 
@@ -22,11 +23,15 @@ NumPy and Matplotlib
 
 Examples
 --------
-To run the following examples, clone this repository, open a shell prompt, go to the src directory and run the python shell:
+To run the following examples, clone this repository, open a shell prompt, go to the src directory 
+and run the python shell:
 ```bash
 export PYTHONPATH=. && python
 ```
-Once you are in the python shell, you can create a Random Waypoint model instace with the following commands:
+### Mobility Models
+Once you are in the python shell, you can instantiate the mobility models available 
+in the pymobility.models.mobility package.
+For example, to create a Random Waypoint model instace, use the following commands:
 ```python
 >>> from pymobility.models.mobility import random_waypoint
 >>> rw = random_waypoint(200, dimensions=(100, 100), velocity=(0.1, 1.0), wt_max=1.0)
@@ -46,9 +51,28 @@ You can also iterate over the positions produced in each step:
 ...     print positions
 ... 
 ```
+### Contact Models
+The contact models are available in the pymobility.models.contact package.
+Differently from the mobility package that yield node positions for each time step, 
+the contact models yield a list of node pairs that were in contact at each time step.
+For example, to create a Random Contact model instance, use the following commands:
+```python
+>>> from pymobility.models.contact import random_contact
+>>> rc = random_contact(200, avg_contacts=5)
+```
+This will create a Random Contact model instance with 200 nodes that generates a list of contacts
+at each time step. 
+The average number of contacts generated in each step is defined by the *avg_contacts* parameter.
+Now you can iterate over the list of contacts produced in each time step:
+```python
+>>> for contacts in rc:
+...     for source, target in contacts:
+...         print (source, target)
+```
 
-The script pymobility/simulation.py, under the src directory, contains other examples on how to run each model 
-and to plot the points using Matplotlib.
+### Simulation and Visualization
+The script pymobility/simulation.py, under the src directory, contains examples on how to run different models 
+and to plot the points in a simulation area using Matplotlib.
 To run it, open a shell prompt, go to the src directory and run the following command:
 ```bash
 export PYTHONPATH=. && python pymobility/simulation.py
