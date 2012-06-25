@@ -28,14 +28,56 @@ Created on Jan 31, 2012
 '''
 import numpy as np
 
-def random_contact(nr_nodes):
+def random_contact(nr_nodes, avg_contacts=1.):
+    '''
+    Random Contact model.
+    This model produces a list of random node pairs that were in contact at each time step.
+    The average number of contacts generated in each time step is defined by the *avg_contacts* parameter,
+    and is distributed accordingly to an exponential distribution with average *avg_contacts*.
+    
+    Required arguments:
+    
+      *nr_nodes*:
+        Integer, the number of nodes.
+      
+      *avg_contacts*:
+        Double, the average number of contacts produced in each time step.
+    '''
+    from pymobility.models.mobility import E
     a = np.array(range(nr_nodes))
     while True:
-        i = np.random.randint(nr_nodes)
-        j = i
-        while j==i:
+        n = int(E(avg_contacts, np.zeros(1)))
+        contacts = []
+        while len(contacts) < n:
+            i = np.random.randint(nr_nodes)
             j = np.random.randint(nr_nodes)
-        yield a[i], a[j]
+            if i == j: continue
+            if (a[i], a[j]) in contacts: continue
+            contacts.append((a[i], a[j]))
+        yield contacts
+        
+def mobility_contact(mobility_model, contact_range=1.0):
+    '''
+    Contact model based on a mobility model.
+    At each time step, this model gets the position of the nodes accordingly to the given mobility model
+    and calculates the distance of each node pair.
+    The list of contacts generated in each time step is the list of node pairs with distance lower than *contact_range*.
+    
+    Required arguments:
+    
+      *nr_nodes*:
+        Integer, the number of nodes.
+      
+      *contact_range*:
+        Double, the maximum euclidean distance in which two nodes are in contact.
+    '''
+    from scipy.spatial.distance import cdist
+    for xy in mobility_model:
+        d = cdist(xy,xy)
+        contacts = []
+        for (i,j) in zip(*np.where(d<contact_range)):
+            if j > i: contacts.append((i,j))
+        yield contacts
 
 ##################################### 
 def __inactive_partner_choice(t_lc,t,inactive_agents,PI,eta): 

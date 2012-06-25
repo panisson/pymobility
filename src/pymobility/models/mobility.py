@@ -22,6 +22,9 @@ U = lambda MIN, MAX, SAMPLES: rand(*SAMPLES.shape) * (MAX - MIN) + MIN
 # define a Truncated Power Law Distribution
 P = lambda ALPHA, MIN, MAX, SAMPLES: ((MAX ** (ALPHA+1.) - 1.) * rand(*SAMPLES.shape) + 1.) ** (1./(ALPHA+1.))
 
+# define an Exponential Distribution
+E = lambda SCALE, SAMPLES: -SCALE*np.log(rand(*SAMPLES.shape))
+
 def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     '''
     Random Waypoint model.
