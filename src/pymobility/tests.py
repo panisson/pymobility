@@ -8,8 +8,60 @@
 #
 import unittest
 from pymobility.models.contact import modelB, model_het
+import numpy as np
+from pymobility.models.mobility import random_waypoint, random_walk,\
+    truncated_levy_walk, random_direction, gauss_markov, reference_point_group,\
+    tvc
 
-class Test(unittest.TestCase):
+class MobilityModelTestCase(unittest.TestCase):
+    MAX_X = 100
+    MAX_Y = 100
+    nr_nodes = 100
+    def setUp(self):
+        np.random.seed(0xffffff)
+    
+    def create_model_instance(self):
+        return random_waypoint(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+        
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+        # check if there is a node outside the margins
+        b = np.where(xy[:,0]<0)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,0]>self.MAX_X)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,1]<0)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,1]>self.MAX_Y)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        
+class RandomWalkTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return random_walk(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+class TruncatedLevyWalkTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return truncated_levy_walk(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+class RandomDirectionTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return random_direction(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+class GaussMarkovTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return gauss_markov(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+class ReferencePointGroupTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return reference_point_group(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+class TimevariantCommunityTestCase(MobilityModelTestCase):
+    def create_model_instance(self):
+        return tvc(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+
+class ContactModelTestCase(unittest.TestCase):
     
     def test_modelB(self):
         
