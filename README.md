@@ -97,5 +97,6 @@ References
 ----------
 [1] Injong Rhee, Minsu Shin, Seongik Hong, Kyunghan Lee, and Song Chong. On the Levy-Walk Nature of Human Mobility. 
     In 2008 IEEE INFOCOM - Proceedings of the 27th Conference on Computer Communications, pages 924-932. April 2008.
+
 [2] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
     Physical Review E 81, 1-4 (2010). Available online at: http://link.aps.org/doi/10.1103/PhysRevE.81.035101
