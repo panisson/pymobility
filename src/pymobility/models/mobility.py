@@ -127,8 +127,12 @@ def random_walk(nr_nodes, dimensions, velocity=1., distance=1., border_policy='r
 
 def truncated_levy_walk(nr_nodes, dimensions, FL_EXP=-2.6, FL_MAX=50., WT_EXP=-1.8, WT_MAX=100., border_policy='reflect'):
     '''
-    Truncated Levy Walk mobility model.
-    This model is based in the Stochastic Walk, and both the flight length and waiting time distributions are truncated power laws,
+    Truncated Levy Walk mobility model, based on the following paper:
+    Injong Rhee, Minsu Shin, Seongik Hong, Kyunghan Lee, and Song Chong. On the Levy-Walk Nature of Human Mobility. 
+        In 2008 IEEE INFOCOM - Proceedings of the 27th Conference on Computer Communications, pages 924-932. April 2008.
+    
+    The implementation is a special case of the more generic Stochastic Walk, 
+    in which both the flight length and waiting time distributions are truncated power laws,
     with exponents set to FL_EXP and WT_EXP and truncated at FL_MAX and WT_MAX.
     The node velocity is a function of the flight length.
     
