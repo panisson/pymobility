@@ -57,12 +57,14 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     y_waypoint = U(0, MAX_Y, NODES)
     wt = np.zeros(nr_nodes)
     velocity = U(MIN_V, MAX_V, NODES)
+    theta = np.arctan2(y_waypoint - y, x_waypoint - x)
+    costheta = np.cos(theta)
+    sintheta = np.sin(theta)
         
     while True:
         # update node position
-        theta = np.arctan2(y_waypoint - y, x_waypoint - x)
-        x = x + velocity * np.cos(theta)
-        y = y + velocity * np.sin(theta)
+        x += velocity * costheta
+        y += velocity * sintheta
         # calculate distance to waypoint
         d = np.sqrt(np.square(y_waypoint-y) + np.square(x_waypoint-x))
         # update info for arrived nodes
@@ -76,9 +78,13 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
             # update info for moving nodes
             arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
         
-        x_waypoint[arrived] = U(0, MAX_X, arrived)
-        y_waypoint[arrived] = U(0, MAX_Y, arrived)
-        velocity[arrived] = U(MIN_V, MAX_V, arrived)
+        if arrived.size > 0:
+            x_waypoint[arrived] = U(0, MAX_X, arrived)
+            y_waypoint[arrived] = U(0, MAX_Y, arrived)
+            velocity[arrived] = U(MIN_V, MAX_V, arrived)
+            theta[arrived] = np.arctan2(y_waypoint[arrived] - y[arrived], x_waypoint[arrived] - x[arrived])
+            costheta[arrived] = np.cos(theta[arrived])
+            sintheta[arrived] = np.sin(theta[arrived])
         
         yield np.dstack((x,y))[0]
         
