@@ -272,120 +272,132 @@ def random_direction(nr_nodes, dimensions, wt_max=None, velocity=(0.1, 1.), bord
     
     return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR, border_policy=border_policy)
 
-def stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None, border_policy='reflect'):
-    '''
-    Base implementation for models with direction uniformly chosen from [0,pi]:
-    random_direction, random_walk, truncated_levy_walk
+class StochasticWalk(object):
+    def __init__(self):
+        self.collect_fl_stats = False
+        self.collect_wt_stats = False
     
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
+    def __call__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None, border_policy='reflect'):
+        '''
+        Base implementation for models with direction uniformly chosen from [0,pi]:
+        random_direction, random_walk, truncated_levy_walk
         
-      *FL_DISTR*:
-        A function that, given a set of samples, 
-         returns another set with the same size of the input set.
-        This function should implement the distribution of flight lengths
-         to be used in the model.
-         
-      *VELOCITY_DISTR*:
-        A function that, given a set of flight lengths, 
-         returns another set with the same size of the input set.
-        This function should implement the distribution of velocities
-         to be used in the model, as random or as a function of the flight lengths.
-      
-    keyword arguments:
-    
-      *WT_DISTR*:
-        A function that, given a set of samples, 
-         returns another set with the same size of the input set.
-        This function should implement the distribution of wait times
-         to be used in the node pause.
-        If WT_DISTR is 0 or None, there is no pause time.
+        Required arguments:
         
-      *border_policy*:
-        String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
-        If 'reflect', the node reflects off the border.
-        If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
-    '''
-    def reflect(xy):
-        # node bounces on the margins
-        b = np.where(xy[:,0]<0)[0]
-        if b.size > 0:
-            xy[b,0] = - xy[b,0]
-            cosintheta[b,0] = -cosintheta[b,0]
-        b = np.where(xy[:,0]>MAX_X)[0]
-        if b.size > 0:
-            xy[b,0] = 2*MAX_X - xy[b,0]
-            cosintheta[b,0] = -cosintheta[b,0]
-        b = np.where(xy[:,1]<0)[0]
-        if b.size > 0:
-            xy[b,1] = - xy[b,1]
-            cosintheta[b,1] = -cosintheta[b,1]
-        b = np.where(xy[:,1]>MAX_Y)[0]
-        if b.size > 0:
-            xy[b,1] = 2*MAX_Y - xy[b,1]
-            cosintheta[b,1] = -cosintheta[b,1]
-    
-    def wrap(xy):
-        b = np.where(xy[:,0]<0)[0]
-        if b.size > 0: xy[b,0] += MAX_X
-        b = np.where(xy[:,0]>MAX_X)[0]
-        if b.size > 0: xy[b,0] -= MAX_X
-        b = np.where(xy[:,1]<0)[0]
-        if b.size > 0: xy[b,1] += MAX_Y
-        b = np.where(xy[:,1]>MAX_Y)[0]
-        if b.size > 0: xy[b,1] -= MAX_Y
-    
-    if border_policy == 'reflect':
-        borderp = reflect
-    elif border_policy == 'wrap':
-        borderp = wrap
-    else:
-        borderp = border_policy
-    
-    MAX_X, MAX_Y = dimensions
-    NODES = np.arange(nr_nodes)
-    xy = U(0, MAX_X, np.dstack((NODES,NODES))[0])
-    fl = FL_DISTR(NODES)
-    velocity = VELOCITY_DISTR(fl)
-    theta = U(0, 2*np.pi, NODES)
-    cosintheta = np.dstack((np.cos(theta), np.sin(theta)))[0] * np.dstack((velocity,velocity))[0]
-    wt = np.zeros(nr_nodes)
-    
-    while True:
-
-        xy += cosintheta
-        fl -= velocity
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+            
+          *FL_DISTR*:
+            A function that, given a set of samples, 
+             returns another set with the same size of the input set.
+            This function should implement the distribution of flight lengths
+             to be used in the model.
+             
+          *VELOCITY_DISTR*:
+            A function that, given a set of flight lengths, 
+             returns another set with the same size of the input set.
+            This function should implement the distribution of velocities
+             to be used in the model, as random or as a function of the flight lengths.
+          
+        keyword arguments:
         
-        # step back for nodes that surpassed fl
-        arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
-        if arrived.size > 0:
-            diff = fl[arrived] / velocity[arrived]
-            xy[arrived] += np.dstack((diff,diff))[0] * cosintheta[arrived]
+          *WT_DISTR*:
+            A function that, given a set of samples, 
+             returns another set with the same size of the input set.
+            This function should implement the distribution of wait times
+             to be used in the node pause.
+            If WT_DISTR is 0 or None, there is no pause time.
+            
+          *border_policy*:
+            String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
+            If 'reflect', the node reflects off the border.
+            If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
+        '''
+        def reflect(xy):
+            # node bounces on the margins
+            b = np.where(xy[:,0]<0)[0]
+            if b.size > 0:
+                xy[b,0] = - xy[b,0]
+                cosintheta[b,0] = -cosintheta[b,0]
+            b = np.where(xy[:,0]>MAX_X)[0]
+            if b.size > 0:
+                xy[b,0] = 2*MAX_X - xy[b,0]
+                cosintheta[b,0] = -cosintheta[b,0]
+            b = np.where(xy[:,1]<0)[0]
+            if b.size > 0:
+                xy[b,1] = - xy[b,1]
+                cosintheta[b,1] = -cosintheta[b,1]
+            b = np.where(xy[:,1]>MAX_Y)[0]
+            if b.size > 0:
+                xy[b,1] = 2*MAX_Y - xy[b,1]
+                cosintheta[b,1] = -cosintheta[b,1]
         
-        # apply border policy
-        borderp(xy)
+        def wrap(xy):
+            b = np.where(xy[:,0]<0)[0]
+            if b.size > 0: xy[b,0] += MAX_X
+            b = np.where(xy[:,0]>MAX_X)[0]
+            if b.size > 0: xy[b,0] -= MAX_X
+            b = np.where(xy[:,1]<0)[0]
+            if b.size > 0: xy[b,1] += MAX_Y
+            b = np.where(xy[:,1]>MAX_Y)[0]
+            if b.size > 0: xy[b,1] -= MAX_Y
         
-        if WT_DISTR:
-            velocity[arrived] = 0.
-            wt[arrived] = WT_DISTR(arrived)
-            # update info for paused nodes
-            wt[np.where(velocity==0.)[0]] -= 1.
-            arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
+        if border_policy == 'reflect':
+            borderp = reflect
+        elif border_policy == 'wrap':
+            borderp = wrap
+        else:
+            borderp = border_policy
         
-        # update info for moving nodes
-        if arrived.size > 0:
-            theta = U(0, 2*np.pi, arrived)
-            fl[arrived] = FL_DISTR(arrived)
-            velocity[arrived] = VELOCITY_DISTR(fl[arrived])
-            v = velocity[arrived]
-            cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
-
-        yield xy
+        MAX_X, MAX_Y = dimensions
+        NODES = np.arange(nr_nodes)
+        xy = U(0, MAX_X, np.dstack((NODES,NODES))[0])
+        fl = FL_DISTR(NODES)
+        velocity = VELOCITY_DISTR(fl)
+        theta = U(0, 2*np.pi, NODES)
+        cosintheta = np.dstack((np.cos(theta), np.sin(theta)))[0] * np.dstack((velocity,velocity))[0]
+        wt = np.zeros(nr_nodes)
+        
+        if self.collect_fl_stats: self.fl_stats = list(fl)
+        if  self.collect_wt_stats: self.wt_stats = list(wt)
+        
+        while True:
+    
+            xy += cosintheta
+            fl -= velocity
+            
+            # step back for nodes that surpassed fl
+            arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
+            if arrived.size > 0:
+                diff = fl[arrived] / velocity[arrived]
+                xy[arrived] += np.dstack((diff,diff))[0] * cosintheta[arrived]
+            
+            # apply border policy
+            borderp(xy)
+            
+            if WT_DISTR:
+                velocity[arrived] = 0.
+                wt[arrived] = WT_DISTR(arrived)
+                if self.collect_wt_stats: self.wt_stats.extend(wt[arrived])
+                # update info for paused nodes
+                wt[np.where(velocity==0.)[0]] -= 1.
+                arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
+            
+            # update info for moving nodes
+            if arrived.size > 0:
+                theta = U(0, 2*np.pi, arrived)
+                fl[arrived] = FL_DISTR(arrived)
+                if self.collect_fl_stats: self.fl_stats.extend(fl[arrived])
+                velocity[arrived] = VELOCITY_DISTR(fl[arrived])
+                v = velocity[arrived]
+                cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
+    
+            yield xy
+        
+stochastic_walk = StochasticWalk()
 
 def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
     '''
