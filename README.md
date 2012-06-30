@@ -8,14 +8,14 @@ The following mobility models that simulate node movements are available:
 - Random Waypoint
 - Random Direction
 - Truncated Levy Walk [1]
-- Gauss-Markov
+- Gauss-Markov [2]
 - Reference Point Group
 - Time-variant Community
 
 In addition to models that simulate node position in time, this library also provides some models 
 that simulate node contacts:
 - The Random Contact model, that simulate random contacts in time
-- The Model B, as described in [2]
+- The Model B, as described in [3]
 
 Dependencies
 ------------
@@ -98,5 +98,8 @@ References
 [1] Injong Rhee, Minsu Shin, Seongik Hong, Kyunghan Lee, and Song Chong. On the Levy-Walk Nature of Human Mobility. 
     In 2008 IEEE INFOCOM - Proceedings of the 27th Conference on Computer Communications, pages 924-932. April 2008.
 
-[2] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
+[2] Camp, T., Boleng, J. & Davies, V. A survey of mobility models for ad hoc network research. 
+    Wireless Communications and Mobile Computing 2, 483-502 (2002).
+
+[3] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
     Physical Review E 81, 1-4 (2010). Available online at: http://link.aps.org/doi/10.1103/PhysRevE.81.035101
