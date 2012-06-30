@@ -273,11 +273,8 @@ def random_direction(nr_nodes, dimensions, wt_max=None, velocity=(0.1, 1.), bord
     return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR, border_policy=border_policy)
 
 class StochasticWalk(object):
-    def __init__(self):
-        self.collect_fl_stats = False
-        self.collect_wt_stats = False
     
-    def __call__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None, border_policy='reflect'):
+    def __init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=None, border_policy='reflect'):
         '''
         Base implementation for models with direction uniformly chosen from [0,pi]:
         random_direction, random_walk, truncated_levy_walk
@@ -316,6 +313,16 @@ class StochasticWalk(object):
             If 'reflect', the node reflects off the border.
             If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
         '''
+        self.collect_fl_stats = False
+        self.collect_wt_stats = False
+        self.border_policy = border_policy
+        self.dimensions = dimensions
+        self.nr_nodes = nr_nodes
+        self.FL_DISTR = FL_DISTR
+        self.VELOCITY_DISTR = VELOCITY_DISTR
+        self.WT_DISTR = WT_DISTR
+        
+    def __iter__(self):
         def reflect(xy):
             # node bounces on the margins
             b = np.where(xy[:,0]<0)[0]
@@ -345,21 +352,21 @@ class StochasticWalk(object):
             b = np.where(xy[:,1]>MAX_Y)[0]
             if b.size > 0: xy[b,1] -= MAX_Y
         
-        if border_policy == 'reflect':
+        if self.border_policy == 'reflect':
             borderp = reflect
-        elif border_policy == 'wrap':
+        elif self.border_policy == 'wrap':
             borderp = wrap
         else:
-            borderp = border_policy
+            borderp = self.border_policy
         
-        MAX_X, MAX_Y = dimensions
-        NODES = np.arange(nr_nodes)
+        MAX_X, MAX_Y = self.dimensions
+        NODES = np.arange(self.nr_nodes)
         xy = U(0, MAX_X, np.dstack((NODES,NODES))[0])
-        fl = FL_DISTR(NODES)
-        velocity = VELOCITY_DISTR(fl)
+        fl = self.FL_DISTR(NODES)
+        velocity = self.VELOCITY_DISTR(fl)
         theta = U(0, 2*np.pi, NODES)
         cosintheta = np.dstack((np.cos(theta), np.sin(theta)))[0] * np.dstack((velocity,velocity))[0]
-        wt = np.zeros(nr_nodes)
+        wt = np.zeros(self.nr_nodes)
         
         if self.collect_fl_stats: self.fl_stats = list(fl)
         if  self.collect_wt_stats: self.wt_stats = list(wt)
@@ -378,9 +385,9 @@ class StochasticWalk(object):
             # apply border policy
             borderp(xy)
             
-            if WT_DISTR:
+            if self.WT_DISTR:
                 velocity[arrived] = 0.
-                wt[arrived] = WT_DISTR(arrived)
+                wt[arrived] = self.WT_DISTR(arrived)
                 if self.collect_wt_stats: self.wt_stats.extend(wt[arrived])
                 # update info for paused nodes
                 wt[np.where(velocity==0.)[0]] -= 1.
@@ -389,15 +396,16 @@ class StochasticWalk(object):
             # update info for moving nodes
             if arrived.size > 0:
                 theta = U(0, 2*np.pi, arrived)
-                fl[arrived] = FL_DISTR(arrived)
+                fl[arrived] = self.FL_DISTR(arrived)
                 if self.collect_fl_stats: self.fl_stats.extend(fl[arrived])
-                velocity[arrived] = VELOCITY_DISTR(fl[arrived])
+                velocity[arrived] = self.VELOCITY_DISTR(fl[arrived])
                 v = velocity[arrived]
                 cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
     
             yield xy
         
-stochastic_walk = StochasticWalk()
+def stochastic_walk(*args, **kwargs):
+    return iter(StochasticWalk(*args, **kwargs))
 
 def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
     '''
