@@ -152,6 +152,29 @@ def continuous_time_edge_markovian(n, lmbd):
         yield [(i,j) for i,j in zip(c[0], c[1]) if i < j]
         a[c] = E(lmbd, c[0])
         
+def broad_continuous_time_edge_markovian(n, alpha):
+    '''
+    This model is similar to the continuous-time edge-Markovian dynamic graph as discussed in the following paper:
+    
+    Augustin Chaintreau, Abderrahmen Mtibaa, Laurent Massoulie, and Christophe Diot. 2007. 
+        The diameter of opportunistic mobile networks. In Proceedings of the 
+        2007 ACM CoNEXT conference (CoNEXT '07). ACM, New York, NY, USA, , Article 12 , 12 pages.
+        
+    The difference is in the generated inter-contact times.    
+    We assume that, for any pairs of nodes (u, v), the times of
+    contact are separated by random variables from a power-law distribution.
+    '''
+    # define a Power Law Distribution
+    P = lambda ALPHA, SCALE, SAMPLES: (SAMPLES ** (1./(1.-alpha))) * SCALE
+    
+    a = P(alpha, 1., np.random.rand(n,n))
+    
+    while True:
+        a -= 1.
+        c = np.where(a <= 0.)
+        yield [(i,j) for i,j in zip(c[0], c[1]) if i < j]
+        a[c] = P(alpha, 1., np.random.rand(*c[0].shape))
+
 def mobility_contact(mobility_model, contact_range=1.0):
     '''
     Contact model based on a mobility model.

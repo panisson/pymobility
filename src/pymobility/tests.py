@@ -149,4 +149,11 @@ class ContactModelTestCase(unittest.TestCase):
         model = contact.continuous_time_edge_markovian(n, lmbd)
         for i in range(50):
             contacts = next(model)
+            
+    def test_broad_continuous_time_edge_markovian(self):
+        n = 10
+        alpha = 1.6
+        model = contact.broad_continuous_time_edge_markovian(n, 1.6)
+        for i in range(50):
+            contacts = next(model)
 
