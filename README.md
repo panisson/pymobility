@@ -7,15 +7,18 @@ The following mobility models that simulate node movements are available:
 - Random Walk
 - Random Waypoint
 - Random Direction
-- Truncated Levy Walk [1]
-- Gauss-Markov [2]
+- Truncated Levy Walk [[1]](#references)
+- Gauss-Markov [[2]](#references)
 - Reference Point Group
 - Time-variant Community
 
 In addition to models that simulate node position in time, this library also provides some models 
 that simulate node contacts:
-- The Random Contact model, that simulate random contacts in time
-- The Model B, as described in [3]
+- Dynamic G(n,p), a dynamic version of the Erdős–Rényi model [[3]](#references)
+- Dynamic G(n,m), another dynamic version of the Erdős–Rényi model [[3]](#references)
+- The edge-Markovian dynamic graph model [[4]](#references)
+- The continuous-time edge-Markovian dynamic graph model [[5]](#references)
+- The Model B, as described in [[6]](#references)
 
 Dependencies
 ------------
@@ -55,17 +58,17 @@ You can also iterate over the positions produced in each step:
 The contact models are available in the pymobility.models.contact package.
 Differently from the mobility package that yield node positions for each time step, 
 the contact models yield a list of node pairs that were in contact at each time step.
-For example, to create a Random Contact model instance, use the following commands:
+For example, to create a Dynamic G(n,p) model instance, use the following commands:
 ```python
->>> from pymobility.models.contact import random_contact
->>> rc = random_contact(200, avg_contacts=5)
+>>> from pymobility.models.contact import dynamic_gnp
+>>> m = dynamic_gnp(200, p=0.01)
 ```
-This will create a Random Contact model instance with 200 nodes that generates a list of contacts
+This will create a Dynamic G(n,p) model instance with 200 nodes that generates a list of contacts
 at each time step. 
-The average number of contacts generated in each step is defined by the *avg_contacts* parameter.
+The probability of any edge appearing at each step is defined by the parameter *p*.  
 Now you can iterate over the list of contacts produced in each time step:
 ```python
->>> for contacts in rc:
+>>> for contacts in m:
 ...     for source, target in contacts:
 ...         print (source, target)
 ```
@@ -101,5 +104,18 @@ References
 [2] Camp, T., Boleng, J. & Davies, V. A survey of mobility models for ad hoc network research. 
     Wireless Communications and Mobile Computing 2, 483-502 (2002).
 
-[3] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
+[3] Andrea E. F. Clementi, Francesco Pasquale, Angelo Monti, and Riccardo Silvestri. 2007. 
+    Communication in dynamic radio networks. In Proceedings of the twenty-sixth annual 
+    ACM symposium on Principles of distributed computing (PODC '07). ACM, New York, NY, USA, 205-214.
+
+[4] Andrea E.F. Clementi, Claudio Macci, Angelo Monti, Francesco Pasquale, and Riccardo Silvestri. 2008. 
+    Flooding time in edge-Markovian dynamic graphs. In Proceedings of the 
+    twenty-seventh ACM symposium on Principles of distributed computing (PODC '08). 
+    ACM, New York, NY, USA, 213-222.
+
+[5] Augustin Chaintreau, Abderrahmen Mtibaa, Laurent Massoulie, and Christophe Diot. 2007. 
+    The diameter of opportunistic mobile networks. In Proceedings of the 
+    2007 ACM CoNEXT conference (CoNEXT '07). ACM, New York, NY, USA, , Article 12 , 12 pages.
+
+[6] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
     Physical Review E 81, 1-4 (2010). Available online at: http://link.aps.org/doi/10.1103/PhysRevE.81.035101
