@@ -10,7 +10,7 @@ The following mobility models that simulate node movements are available:
 - Truncated Levy Walk [[1]](#references)
 - Gauss-Markov [[2]](#references)
 - Reference Point Group Mobility model [[3]](#references)
-- Time-variant Community [[4]]
+- Time-variant Community [[4]](#references)
 
 In addition to models that simulate node position in time, this library also provides some models 
 that simulate node contacts:
