@@ -7,6 +7,7 @@
 #  This program was written by André Panisson <panisson@gmail.com>
 #
 import unittest
+from pymobility.models import contact
 from pymobility.models.contact import modelB, model_het
 import numpy as np
 from pymobility.models.mobility import random_waypoint, random_walk,\
@@ -95,3 +96,57 @@ class ContactModelTestCase(unittest.TestCase):
             if t==10000:
                 assert contacts == [(0, 36), (1, 21), (2, 4), (3, 92), (4, 2), (5, 70), (5, 87), (6, 46), (7, 53), (8, 80), (8, 52), (9, 15), (10, 27), (11, 23), (12, 90), (13, 81), (14, 34), (15, 9), (18, 35), (19, 75), (20, 98), (21, 1), (22, 78), (23, 11), (24, 58), (25, 26), (26, 25), (27, 10), (28, 31), (29, 95), (30, 50), (31, 28), (32, 79), (33, 68), (34, 14), (35, 18), (36, 0), (37, 44), (38, 47), (39, 55), (40, 74), (41, 63), (42, 73), (43, 93), (44, 37), (45, 67), (46, 6), (47, 38), (48, 97), (49, 96), (50, 30), (51, 66), (52, 8), (52, 80), (53, 7), (54, 61), (55, 39), (57, 82), (58, 24), (60, 83), (61, 54), (62, 91), (63, 41), (65, 89), (66, 51), (67, 45), (68, 33), (70, 5), (70, 87), (73, 42), (74, 40), (75, 19), (76, 99), (77, 94), (78, 22), (79, 32), (80, 8), (80, 52), (81, 13), (82, 57), (83, 60), (87, 5), (87, 70), (89, 65), (90, 12), (91, 62), (92, 3), (93, 43), (94, 77), (95, 29), (96, 49), (97, 48), (98, 20), (99, 76)]
                 break
+
+    def test_dynamic_gnp(self):
+        n = 10
+        dgnp = contact.dynamic_gnp(n, 1.)
+        for i in range(5):
+            contacts = next(dgnp)
+            self.assertEqual(len(contacts), (n*(n-1))/2)
+            for i,j in contacts:
+                self.assertNotEqual(i,j)
+                
+    def test_dynamic_gnm(self):
+        n = 10
+        m = 5
+        dgnm = contact.dynamic_gnm(n, m)
+        for i in range(5):
+            contacts = next(dgnm)
+            self.assertEqual(len(contacts), m)
+            for i,j in contacts:
+                self.assertNotEqual(i,j)
+                
+    def test_edge_markovian_empty(self):
+        n = 10
+        p = 0.
+        q = 1.
+        g = 0.
+        em = contact.edge_markovian(n, p, q, g)
+        for i in range(5):
+            contacts = next(em)
+            self.assertEqual(len(contacts), 0)
+            for i,j in contacts:
+                self.assertNotEqual(i,j)
+                
+    def test_edge_markovian_alternating(self):
+        n = 10
+        p = 1.
+        q = 1.
+        g = 0.
+        em = contact.edge_markovian(n, p, q, g)
+        for i in range(5):
+            contacts = next(em)
+            if i%2 == 0:
+                self.assertEqual(len(contacts), (n*(n-1))/2)
+            else:
+                self.assertEqual(len(contacts), 0)
+            for i,j in contacts:
+                self.assertNotEqual(i,j)
+
+    def test_continuous_time_edge_markovian(self):
+        n = 10
+        lmbd = 50.
+        model = contact.continuous_time_edge_markovian(n, lmbd)
+        for i in range(50):
+            contacts = next(model)
+
