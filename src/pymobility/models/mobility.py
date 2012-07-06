@@ -87,190 +87,6 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
             sintheta[arrived] = np.sin(theta[arrived])
         
         yield np.dstack((x,y))[0]
-        
-#        if i%100 == 0:
-#            print np.average(velocity)
-
-def random_walk(nr_nodes, dimensions, velocity=1., distance=1., border_policy='reflect'):
-    '''
-    Random Walk mobility model.
-    This model is based in the Stochastic Walk, but both the flight length and node velocity distributions are in fact constants,
-    set to the *distance* and *velocity* parameters. The waiting time is set to None.
-    
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
-      
-    keyword arguments:
-    
-      *velocity*:
-        Double, the value for the constant node velocity. Default is 1.0
-      
-      *distance*:
-        Double, the value for the constant distance traveled in each step. Default is 1.0
-        
-      *border_policy*:
-        String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
-        If 'reflect', the node reflects off the border.
-        If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
-    '''
-    if velocity>distance:
-        # In this implementation, each step is 1 second,
-        # it is not possible to have a velocity larger than the distance
-        raise Exception('Velocity must be <= Distance')
-    
-    fl = np.zeros(nr_nodes)+distance
-    vel = np.zeros(nr_nodes)+velocity
-    
-    FL_DISTR = lambda SAMPLES: np.array(fl[:len(SAMPLES)])
-    VELOCITY_DISTR = lambda FD: np.array(vel[:len(FD)])
-    
-    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, border_policy=border_policy)
-
-def truncated_levy_walk(nr_nodes, dimensions, FL_EXP=-2.6, FL_MAX=50., WT_EXP=-1.8, WT_MAX=100., border_policy='reflect'):
-    '''
-    Truncated Levy Walk mobility model, based on the following paper:
-    Injong Rhee, Minsu Shin, Seongik Hong, Kyunghan Lee, and Song Chong. On the Levy-Walk Nature of Human Mobility. 
-        In 2008 IEEE INFOCOM - Proceedings of the 27th Conference on Computer Communications, pages 924-932. April 2008.
-    
-    The implementation is a special case of the more generic Stochastic Walk, 
-    in which both the flight length and waiting time distributions are truncated power laws,
-    with exponents set to FL_EXP and WT_EXP and truncated at FL_MAX and WT_MAX.
-    The node velocity is a function of the flight length.
-    
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
-      
-    keyword arguments:
-    
-      *FL_EXP*:
-        Double, the exponent of the flight length distribution. Default is -2.6
-        
-      *FL_MAX*:
-        Double, the maximum value of the flight length distribution. Default is 50
-      
-      *WT_EXP*:
-        Double, the exponent of the waiting time distribution. Default is -1.8
-        
-      *WT_MAX*:
-        Double, the maximum value of the waiting time distribution. Default is 100
-        
-      *border_policy*:
-        String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
-        If 'reflect', the node reflects off the border.
-        If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
-    '''
-    
-    FL_DISTR = lambda SAMPLES: P(FL_EXP, 1., FL_MAX, SAMPLES)
-    if WT_EXP and WT_MAX:
-        WT_DISTR = lambda SAMPLES: P(WT_EXP, 1., WT_MAX, SAMPLES)
-    else:
-        WT_DISTR = None
-    VELOCITY_DISTR = lambda FD: np.sqrt(FD)/10.
-    
-    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR, border_policy=border_policy)
-
-def heterogeneous_truncated_levy_walk(nr_nodes, dimensions, WT_EXP=-1.8, WT_MAX=100., FL_EXP=-2.6, FL_MAX=50., border_policy='reflect'):
-    '''
-    This is a variant of the Truncated Levy Walk mobility model.
-    This model is based in the Stochastic Walk.
-    The waiting time distribution is a truncated power law with exponent set to WT_EXP and truncated WT_MAX.
-    The flight length is a uniform distribution, different for each node. These uniform distributions are 
-    created by taking both min and max values from a power law with exponent set to FL_EXP and truncated FL_MAX.
-    The node velocity is a function of the flight length.
-    
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
-      
-    keyword arguments:
-    
-      *WT_EXP*:
-        Double, the exponent of the waiting time distribution. Default is -1.8
-        
-      *WT_MAX*:
-        Double, the maximum value of the waiting time distribution. Default is 100
-    
-      *FL_EXP*:
-        Double, the exponent of the flight length distribution. Default is -2.6
-        
-      *FL_MAX*:
-        Double, the maximum value of the flight length distribution. Default is 50
-        
-      *border_policy*:
-        String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
-        If 'reflect', the node reflects off the border.
-        If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
-    '''
-    
-    NODES = np.arange(nr_nodes)
-    FL_MAX = P(-1.8, 10., FL_MAX, NODES)
-    FL_MIN = FL_MAX/10.
-    
-    FL_DISTR = lambda SAMPLES: rand(len(SAMPLES)) * (FL_MAX[SAMPLES] - FL_MIN[SAMPLES]) + FL_MIN[SAMPLES]
-    WT_DISTR = lambda SAMPLES: P(WT_EXP, 1., WT_MAX, SAMPLES)
-    VELOCITY_DISTR = lambda FD: np.sqrt(FD)/10.
-    
-    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR, border_policy=border_policy)
-
-def random_direction(nr_nodes, dimensions, wt_max=None, velocity=(0.1, 1.), border_policy='reflect'):
-    '''
-    Random Direction mobility model.
-    This model is based in the Stochastic Walk. The flight length is chosen from a uniform distribution, 
-    with minimum 0 and maximum set to the maximum dimension value.
-    The velocity is also chosen from a uniform distribution, with boundaries set by the *velocity* parameter.
-    If wt_max is set, the waiting time is chosen from a uniform distribution with values between 0 and wt_max.
-    If wt_max is not set, waiting time is set to None.
-    
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
-      
-    keyword arguments:
-    
-      *wt_max*:
-        Double, maximum value for the waiting time distribution.
-        If wt_max is set, the waiting time is chosen from a uniform distribution with values between 0 and wt_max.
-        If wt_max is not set, the waiting time is set to None.
-        Default is None.
-      
-      *velocity*:
-        Tuple of Doubles, the minimum and maximum values for node velocity.
-        
-      *border_policy*:
-        String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
-        If 'reflect', the node reflects off the border.
-        If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
-    '''
-    
-    MIN_V, MAX_V = velocity
-    FL_MAX = max(dimensions)
-    
-    FL_DISTR = lambda SAMPLES: U(0, FL_MAX, SAMPLES)
-    if wt_max:
-        WT_DISTR = lambda SAMPLES: U(0, wt_max, SAMPLES)
-    else:
-        WT_DISTR = None
-    VELOCITY_DISTR = lambda FD: U(MIN_V, MAX_V, FD)
-    
-    return stochastic_walk(nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR, border_policy=border_policy)
 
 class StochasticWalk(object):
     
@@ -403,9 +219,210 @@ class StochasticWalk(object):
                 cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
     
             yield xy
+
+class RandomWalk(StochasticWalk):
+    
+    def __init__(self, nr_nodes, dimensions, velocity=1., distance=1., border_policy='reflect'):
+        '''
+        Random Walk mobility model.
+        This model is based in the Stochastic Walk, but both the flight length and node velocity distributions are in fact constants,
+        set to the *distance* and *velocity* parameters. The waiting time is set to None.
+        
+        Required arguments:
+        
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+          
+        keyword arguments:
+        
+          *velocity*:
+            Double, the value for the constant node velocity. Default is 1.0
+          
+          *distance*:
+            Double, the value for the constant distance traveled in each step. Default is 1.0
+            
+          *border_policy*:
+            String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
+            If 'reflect', the node reflects off the border.
+            If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
+        '''
+        if velocity>distance:
+            # In this implementation, each step is 1 second,
+            # it is not possible to have a velocity larger than the distance
+            raise Exception('Velocity must be <= Distance')
+        
+        fl = np.zeros(nr_nodes)+distance
+        vel = np.zeros(nr_nodes)+velocity
+        
+        FL_DISTR = lambda SAMPLES: np.array(fl[:len(SAMPLES)])
+        VELOCITY_DISTR = lambda FD: np.array(vel[:len(FD)])
+        
+        StochasticWalk.__init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR,border_policy=border_policy)
+
+class RandomDirection(StochasticWalk):
+    
+    def __init__(self, nr_nodes, dimensions, wt_max=None, velocity=(0.1, 1.), border_policy='reflect'):
+        '''
+        Random Direction mobility model.
+        This model is based in the Stochastic Walk. The flight length is chosen from a uniform distribution, 
+        with minimum 0 and maximum set to the maximum dimension value.
+        The velocity is also chosen from a uniform distribution, with boundaries set by the *velocity* parameter.
+        If wt_max is set, the waiting time is chosen from a uniform distribution with values between 0 and wt_max.
+        If wt_max is not set, waiting time is set to None.
+        
+        Required arguments:
+        
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+          
+        keyword arguments:
+        
+          *wt_max*:
+            Double, maximum value for the waiting time distribution.
+            If wt_max is set, the waiting time is chosen from a uniform distribution with values between 0 and wt_max.
+            If wt_max is not set, the waiting time is set to None.
+            Default is None.
+          
+          *velocity*:
+            Tuple of Doubles, the minimum and maximum values for node velocity.
+            
+          *border_policy*:
+            String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
+            If 'reflect', the node reflects off the border.
+            If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
+        '''
+        
+        MIN_V, MAX_V = velocity
+        FL_MAX = max(dimensions)
+        
+        FL_DISTR = lambda SAMPLES: U(0, FL_MAX, SAMPLES)
+        if wt_max:
+            WT_DISTR = lambda SAMPLES: U(0, wt_max, SAMPLES)
+        else:
+            WT_DISTR = None
+        VELOCITY_DISTR = lambda FD: U(MIN_V, MAX_V, FD)
+        
+        StochasticWalk.__init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
+
+class TruncatedLevyWalk(StochasticWalk):
+    
+    def __init__(self, nr_nodes, dimensions, FL_EXP=-2.6, FL_MAX=50., WT_EXP=-1.8, WT_MAX=100., border_policy='reflect'):
+        '''
+        Truncated Levy Walk mobility model, based on the following paper:
+        Injong Rhee, Minsu Shin, Seongik Hong, Kyunghan Lee, and Song Chong. On the Levy-Walk Nature of Human Mobility. 
+            In 2008 IEEE INFOCOM - Proceedings of the 27th Conference on Computer Communications, pages 924-932. April 2008.
+        
+        The implementation is a special case of the more generic Stochastic Walk, 
+        in which both the flight length and waiting time distributions are truncated power laws,
+        with exponents set to FL_EXP and WT_EXP and truncated at FL_MAX and WT_MAX.
+        The node velocity is a function of the flight length.
+        
+        Required arguments:
+        
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+          
+        keyword arguments:
+        
+          *FL_EXP*:
+            Double, the exponent of the flight length distribution. Default is -2.6
+            
+          *FL_MAX*:
+            Double, the maximum value of the flight length distribution. Default is 50
+          
+          *WT_EXP*:
+            Double, the exponent of the waiting time distribution. Default is -1.8
+            
+          *WT_MAX*:
+            Double, the maximum value of the waiting time distribution. Default is 100
+            
+          *border_policy*:
+            String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
+            If 'reflect', the node reflects off the border.
+            If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
+        '''
+        
+        FL_DISTR = lambda SAMPLES: P(FL_EXP, 1., FL_MAX, SAMPLES)
+        if WT_EXP and WT_MAX:
+            WT_DISTR = lambda SAMPLES: P(WT_EXP, 1., WT_MAX, SAMPLES)
+        else:
+            WT_DISTR = None
+        VELOCITY_DISTR = lambda FD: np.sqrt(FD)/10.
+        
+        StochasticWalk.__init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
+
+class HeterogeneousTruncatedLevyWalk(StochasticWalk):
+
+    def __init__(self, nr_nodes, dimensions, WT_EXP=-1.8, WT_MAX=100., FL_EXP=-2.6, FL_MAX=50., border_policy='reflect'):
+        '''
+        This is a variant of the Truncated Levy Walk mobility model.
+        This model is based in the Stochastic Walk.
+        The waiting time distribution is a truncated power law with exponent set to WT_EXP and truncated WT_MAX.
+        The flight length is a uniform distribution, different for each node. These uniform distributions are 
+        created by taking both min and max values from a power law with exponent set to FL_EXP and truncated FL_MAX.
+        The node velocity is a function of the flight length.
+        
+        Required arguments:
+        
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+          
+        keyword arguments:
+        
+          *WT_EXP*:
+            Double, the exponent of the waiting time distribution. Default is -1.8
+            
+          *WT_MAX*:
+            Double, the maximum value of the waiting time distribution. Default is 100
+        
+          *FL_EXP*:
+            Double, the exponent of the flight length distribution. Default is -2.6
+            
+          *FL_MAX*:
+            Double, the maximum value of the flight length distribution. Default is 50
+            
+          *border_policy*:
+            String, either 'reflect' or 'wrap'. The policy that is used when the node arrives to the border.
+            If 'reflect', the node reflects off the border.
+            If 'wrap', the node reappears at the opposite edge (as in a torus-shaped area).
+        '''
+        
+        NODES = np.arange(nr_nodes)
+        FL_MAX = P(-1.8, 10., FL_MAX, NODES)
+        FL_MIN = FL_MAX/10.
+        
+        FL_DISTR = lambda SAMPLES: rand(len(SAMPLES)) * (FL_MAX[SAMPLES] - FL_MIN[SAMPLES]) + FL_MIN[SAMPLES]
+        WT_DISTR = lambda SAMPLES: P(WT_EXP, 1., WT_MAX, SAMPLES)
+        VELOCITY_DISTR = lambda FD: np.sqrt(FD)/10.
+        
+        StochasticWalk.__init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
         
 def stochastic_walk(*args, **kwargs):
     return iter(StochasticWalk(*args, **kwargs))
+
+def random_walk(*args, **kwargs):
+    return iter(RandomWalk(*args, **kwargs))
+
+def random_direction(*args, **kwargs):
+    return iter(RandomDirection(*args, **kwargs))
+
+def truncated_levy_walk(*args, **kwargs):
+    return iter(TruncatedLevyWalk(*args, **kwargs))
+
+def heterogeneous_truncated_levy_walk(*args, **kwargs):
+    return iter(HeterogeneousTruncatedLevyWalk(*args, **kwargs))
 
 def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
     '''
