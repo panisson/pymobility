@@ -9,16 +9,16 @@ The following mobility models that simulate node movements are available:
 - Random Direction
 - Truncated Levy Walk [[1]](#references)
 - Gauss-Markov [[2]](#references)
-- Reference Point Group
-- Time-variant Community
+- Reference Point Group Mobility model [[3]](#references)
+- Time-variant Community [[4]]
 
 In addition to models that simulate node position in time, this library also provides some models 
 that simulate node contacts:
-- Dynamic G(n,p), a dynamic version of the Erdős–Rényi model [[3]](#references)
-- Dynamic G(n,m), another dynamic version of the Erdős–Rényi model [[3]](#references)
-- The edge-Markovian dynamic graph model [[4]](#references)
-- The continuous-time edge-Markovian dynamic graph model [[5]](#references)
-- The Model B, as described in [[6]](#references)
+- Dynamic G(n,p), a dynamic version of the Erdős–Rényi model [[5]](#references)
+- Dynamic G(n,m), another dynamic version of the Erdős–Rényi model [[5]](#references)
+- The edge-Markovian dynamic graph model [[6]](#references)
+- The continuous-time edge-Markovian dynamic graph model [[7]](#references)
+- The Model B, as described in [[8]](#references)
 
 Dependencies
 ------------
@@ -104,18 +104,26 @@ References
 [2] Camp, T., Boleng, J. & Davies, V. A survey of mobility models for ad hoc network research. 
     Wireless Communications and Mobile Computing 2, 483-502 (2002).
 
-[3] Andrea E. F. Clementi, Francesco Pasquale, Angelo Monti, and Riccardo Silvestri. 2007. 
+[3] Xiaoyan Hong, Mario Gerla, Guangyu Pei, and Ching-Chuan Chiang. 1999. 
+    A group mobility model for ad hoc wireless networks. In Proceedings of the 
+    2nd ACM international workshop on Modeling, analysis and simulation of 
+    wireless and mobile systems (MSWiM '99). ACM, New York, NY, USA, 53-60.
+
+[4] Wei-jen Hsu, Thrasyvoulos Spyropoulos, Konstantinos Psounis, and Ahmed Helmy, 
+    Modeling Time-variant User Mobility in Wireless Mobile Networks, INFOCOM 2007, May 2007.
+
+[5] Andrea E. F. Clementi, Francesco Pasquale, Angelo Monti, and Riccardo Silvestri. 2007. 
     Communication in dynamic radio networks. In Proceedings of the twenty-sixth annual 
     ACM symposium on Principles of distributed computing (PODC '07). ACM, New York, NY, USA, 205-214.
 
-[4] Andrea E.F. Clementi, Claudio Macci, Angelo Monti, Francesco Pasquale, and Riccardo Silvestri. 2008. 
+[6] Andrea E.F. Clementi, Claudio Macci, Angelo Monti, Francesco Pasquale, and Riccardo Silvestri. 2008. 
     Flooding time in edge-Markovian dynamic graphs. In Proceedings of the 
     twenty-seventh ACM symposium on Principles of distributed computing (PODC '08). 
     ACM, New York, NY, USA, 213-222.
 
-[5] Augustin Chaintreau, Abderrahmen Mtibaa, Laurent Massoulie, and Christophe Diot. 2007. 
+[7] Augustin Chaintreau, Abderrahmen Mtibaa, Laurent Massoulie, and Christophe Diot. 2007. 
     The diameter of opportunistic mobile networks. In Proceedings of the 
     2007 ACM CoNEXT conference (CoNEXT '07). ACM, New York, NY, USA, , Article 12 , 12 pages.
 
-[6] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
+[8] Stehle, J., Barrat, A. & Bianconi, G. Dynamical and bursty interactions in social networks. 
     Physical Review E 81, 1-4 (2010). Available online at: http://link.aps.org/doi/10.1103/PhysRevE.81.035101

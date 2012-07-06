@@ -489,7 +489,13 @@ def gauss_markov(nr_nodes, dimensions, velocity_mean=1., alpha=1., variance=1.):
         
 def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=0.1):
     '''
-    Reference Point Group Mobility model.
+    Reference Point Group Mobility model, discussed in the following paper:
+    
+        Xiaoyan Hong, Mario Gerla, Guangyu Pei, and Ching-Chuan Chiang. 1999. 
+        A group mobility model for ad hoc wireless networks. In Proceedings of the 
+        2nd ACM international workshop on Modeling, analysis and simulation of 
+        wireless and mobile systems (MSWiM '99). ACM, New York, NY, USA, 53-60.
+    
     In this implementation, group trajectories follow a random direction model,
     while nodes follow a random walk around the group center.
     The parameter 'aggregation' controls how close the nodes are to the group center.
@@ -611,7 +617,11 @@ def reference_point_group(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=
         
 def tvc(nr_nodes, dimensions, velocity=(0.1, 1.), aggregation=[0.5,0.], epoch=[100,100]):
     '''
-    Time-variant Community Mobility Model
+    Time-variant Community Mobility Model, discussed in the paper
+    
+        Wei-jen Hsu, Thrasyvoulos Spyropoulos, Konstantinos Psounis, and Ahmed Helmy, 
+        "Modeling Time-variant User Mobility in Wireless Mobile Networks," INFOCOM 2007, May 2007.
+    
     This is a variant of the original definition, in the following way:
     - Communities don't have a specific area, but a reference point where the 
        community members aggregate around.
