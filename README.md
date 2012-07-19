@@ -20,19 +20,25 @@ that simulate node contacts:
 - The continuous-time edge-Markovian dynamic graph model [[7]](#references)
 - The Model B, as described in [[8]](#references)
 
+Installation
+------------
+
+setuptools - from Git repository
+
+```bash
+> git clone git://github.com/panisson/pymobility.git
+> cd pymobility
+> python setup.py install (run as admin/root)
+```
+
 Dependencies
 ------------
 NumPy and Matplotlib
 
 Examples
 --------
-To run the following examples, clone this repository, open a shell prompt, go to the src directory 
-and run the python shell:
-```bash
-export PYTHONPATH=. && python
-```
 ### Mobility Models
-Once you are in the python shell, you can instantiate the mobility models available 
+In a python shell, you can instantiate the mobility models available 
 in the pymobility.models.mobility package.
 For example, to create a Random Waypoint model instace, use the following commands:
 ```python
@@ -78,7 +84,7 @@ The script pymobility/simulation.py, under the src directory, contains examples 
 and to plot the points in a simulation area using Matplotlib.
 To run it, open a shell prompt, go to the src directory and run the following command:
 ```bash
-export PYTHONPATH=. && python pymobility/simulation.py
+python pymobility/simulation.py
 ```
 
 Contributing
