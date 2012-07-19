@@ -15,52 +15,101 @@ from pymobility.models.mobility import random_waypoint, random_walk,\
     tvc
 
 class MobilityModelTestCase(unittest.TestCase):
+    
     MAX_X = 100
     MAX_Y = 100
     nr_nodes = 100
+    
     def setUp(self):
         np.random.seed(0xffffff)
     
+    def check_margins(self, xy, max_x, max_y):
+        # check if there is a node outside the margins
+        b = np.where(xy[:,0]<0)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,0]>max_x)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,1]<0)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+        b = np.where(xy[:,1]>max_y)[0]
+        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
+            
+class RandomWaypointTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
-        return random_waypoint(self.nr_nodes, (self.MAX_X, self.MAX_Y))
-        
+        return random_waypoint(self.nr_nodes, (self.MAX_X, self.MAX_Y), velocity=(15, 20))
+    
     def test_margins(self):
         model_instance = self.create_model_instance()
         for _ in range(1000):
             xy = next(model_instance)
-        # check if there is a node outside the margins
-        b = np.where(xy[:,0]<0)[0]
-        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
-        b = np.where(xy[:,0]>self.MAX_X)[0]
-        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
-        b = np.where(xy[:,1]<0)[0]
-        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
-        b = np.where(xy[:,1]>self.MAX_Y)[0]
-        self.assertEqual(b.size, 0, "At least a node was found outside the margins")
-        
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class RandomWalkTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return random_walk(self.nr_nodes, (self.MAX_X, self.MAX_Y))
     
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class TruncatedLevyWalkTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return truncated_levy_walk(self.nr_nodes, (self.MAX_X, self.MAX_Y))
     
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class RandomDirectionTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return random_direction(self.nr_nodes, (self.MAX_X, self.MAX_Y))
     
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class GaussMarkovTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return gauss_markov(self.nr_nodes, (self.MAX_X, self.MAX_Y))
     
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class ReferencePointGroupTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return reference_point_group(self.nr_nodes, (self.MAX_X, self.MAX_Y))
     
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
+    
 class TimevariantCommunityTestCase(MobilityModelTestCase):
+    
     def create_model_instance(self):
         return tvc(self.nr_nodes, (self.MAX_X, self.MAX_Y))
+    
+    def test_margins(self):
+        model_instance = self.create_model_instance()
+        for _ in range(1000):
+            xy = next(model_instance)
+            self.check_margins(xy, self.MAX_X, self.MAX_Y)
 
 class ContactModelTestCase(unittest.TestCase):
     
