@@ -70,6 +70,10 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
         # update info for arrived nodes
         arrived = np.where(d<=velocity)[0]
         
+        # step back for nodes that surpassed waypoint
+        x[arrived] = x_waypoint[arrived]
+        y[arrived] = y_waypoint[arrived]
+        
         if wt_max:
             velocity[arrived] = 0.
             wt[arrived] = U(0, wt_max, arrived)
