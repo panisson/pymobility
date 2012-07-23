@@ -199,7 +199,7 @@ class StochasticWalk(object):
             # step back for nodes that surpassed fl
             arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
             if arrived.size > 0:
-                diff = fl[arrived] / velocity[arrived]
+                diff = fl.take(arrived) / velocity.take(arrived)
                 xy[arrived] += np.dstack((diff,diff))[0] * cosintheta[arrived]
             
             # apply border policy
