@@ -25,6 +25,83 @@ P = lambda ALPHA, MIN, MAX, SAMPLES: ((MAX ** (ALPHA+1.) - 1.) * rand(*SAMPLES.s
 # define an Exponential Distribution
 E = lambda SCALE, SAMPLES: -SCALE*np.log(rand(*SAMPLES.shape))
 
+# *************** Palm state probability **********************
+def pause_probability_init(pause_low, pause_high, speed_low, speed_high, max_x, max_y):
+    alpha1 = ((pause_high+pause_low)*(speed_high-speed_low))/(2*np.log(speed_high/speed_low))
+    delta1 = np.sqrt((max_x*max_x) +(max_y*max_y))
+    return alpha1/(alpha1+delta1)
+
+# *************** Palm residual ******************************
+def residual_time(mean, delta):
+    t1 = mean - delta;
+    t2 = mean + delta;
+    u = rand();
+    if delta!=0.0:
+        if (u < (2.*t1/(t1+t2)) ):
+            residual=u*(t1+t2)/2.
+        else:
+            residual=t2-np.sqrt((1.-u)*(t2*t2 - t1*t1))
+    else:
+        residual=u*mean  
+    return residual
+
+# *********** Initial speed ***************************
+def initial_speed(speed_mean, speed_delta):
+    v0 = speed_mean - speed_delta
+    v1 = speed_mean + speed_delta
+    u = rand()
+    return pow(v1, u) / pow(v0, u - 1)
+
+def init_random_waypoint(nr_nodes, max_x, max_y, speed_low, speed_high, 
+                         pause_low, pause_high, x, y, x_waypoint, y_waypoint, speed, pause_time):
+
+    moving = np.ones(nr_nodes)
+    speed_mean, speed_delta = (speed_low+speed_high)/2., (speed_high-speed_low)/2.
+    pause_mean, pause_delta = (pause_low+pause_high)/2., (pause_high-pause_low)/2.
+
+    # steady-state pause probability for Random Waypoint
+    q0 = pause_probability_init(pause_low, pause_high, speed_low, speed_high, max_x, max_y)
+    
+    for i in range(nr_nodes):
+        
+        while True:
+            if rand() < q0:
+                moving[i] = 0.
+                break
+            else:
+                # M_0
+                x1 = rand()*max_x
+                x2 = rand()*max_x
+                # M_1
+                y1 = rand()*max_y
+                y2 = rand()*max_y
+                
+                #r is a ratio of the length of the randomly chosen path over
+                # the length of a diagonal across the simulation area
+                # ||M_1 - M_0||
+                r = np.sqrt(((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))/(max_x*max_x + max_y*max_y))
+                if rand() < r:
+                    moving[i] = 1.
+                    break
+
+        # steady-state positions
+        # initially the node has traveled a proportion u2 of the path from (x1,y1) to (x2,y2)
+        u2 = rand();
+        x[i] = u2*x1 + (1 - u2)*x2;
+        y[i] = u2*y1 + (1 - u2)*y2;
+        x_waypoint[i] = x2
+        y_waypoint[i] = y2
+        
+        # steady-state speed and pause time    
+        if moving[i] == 0.: #node initially paused
+            pause_time[i] = residual_time(pause_mean, pause_delta)
+            speed[i] = 0.0
+          
+        else: #node initially moving
+            pause_time[i] = 0.0
+            #calculate initial node speed
+            speed[i] = initial_speed(speed_mean,speed_delta)
+
 def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     '''
     Random Waypoint model.
@@ -50,6 +127,8 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     MAX_X,MAX_Y = dimensions
     MIN_V, MAX_V = velocity
     
+    wt_min = 0.
+    
     NODES = np.arange(nr_nodes)
     x = U(0, MAX_X, NODES)
     y = U(0, MAX_Y, NODES)
@@ -57,10 +136,15 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
     y_waypoint = U(0, MAX_Y, NODES)
     wt = np.zeros(nr_nodes)
     velocity = U(MIN_V, MAX_V, NODES)
+    
+    init_random_waypoint(nr_nodes, MAX_X, MAX_Y, MIN_V, MAX_V, wt_min, 
+                         (wt_max if wt_max is not None else 0.), 
+                         x, y, x_waypoint, y_waypoint, velocity, wt)
+    
     theta = np.arctan2(y_waypoint - y, x_waypoint - x)
     costheta = np.cos(theta)
     sintheta = np.sin(theta)
-        
+    
     while True:
         # update node position
         x += velocity * costheta
@@ -68,7 +152,7 @@ def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
         # calculate distance to waypoint
         d = np.sqrt(np.square(y_waypoint-y) + np.square(x_waypoint-x))
         # update info for arrived nodes
-        arrived = np.where(d<=velocity)[0]
+        arrived = np.where(np.logical_and(d<=velocity, wt<=0.))[0]
         
         # step back for nodes that surpassed waypoint
         x[arrived] = x_waypoint[arrived]
