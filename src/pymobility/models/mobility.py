@@ -102,12 +102,12 @@ def init_random_waypoint(nr_nodes, max_x, max_y,
 
     # steady-state speed and pause time
     paused_idx = moving==0.
-    pause_time[paused_idx] = residual_time(pause_mean, pause_delta, pause_time.shape)
+    pause_time[paused_idx] = residual_time(pause_mean, pause_delta, (np.sum(paused_idx),))
     speed[paused_idx] = 0.0
 
     moving_idx = np.logical_not(paused_idx)
     pause_time[moving_idx] = 0.0
-    speed[moving_idx] = initial_speed(speed_mean,speed_delta, pause_time.shape)
+    speed[moving_idx] = initial_speed(speed_mean,speed_delta, (np.sum(moving_idx),))
 
 class RandomWaypoint(object):
     
