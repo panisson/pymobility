@@ -102,79 +102,90 @@ def init_random_waypoint(nr_nodes, max_x, max_y, speed_low, speed_high,
             #calculate initial node speed
             speed[i] = initial_speed(speed_mean,speed_delta)
 
-def random_waypoint(nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
-    '''
-    Random Waypoint model.
+class RandomWaypoint(object):
     
-    Required arguments:
-    
-      *nr_nodes*:
-        Integer, the number of nodes.
-      
-      *dimensions*:
-        Tuple of Integers, the x and y dimensions of the simulation area.
-      
-    keyword arguments:
-    
-      *velocity*:
-        Tuple of Integers, the minimum and maximum values for node velocity.
-      
-      *wt_max*:
-        Integer, the maximum wait time for node pauses.
-        If wt_max is 0 or None, there is no pause time.
-    '''
-    
-    MAX_X,MAX_Y = dimensions
-    MIN_V, MAX_V = velocity
-    
-    wt_min = 0.
-    
-    NODES = np.arange(nr_nodes)
-    x = U(0, MAX_X, NODES)
-    y = U(0, MAX_Y, NODES)
-    x_waypoint = U(0, MAX_X, NODES)
-    y_waypoint = U(0, MAX_Y, NODES)
-    wt = np.zeros(nr_nodes)
-    velocity = U(MIN_V, MAX_V, NODES)
-    
-    init_random_waypoint(nr_nodes, MAX_X, MAX_Y, MIN_V, MAX_V, wt_min, 
-                         (wt_max if wt_max is not None else 0.), 
-                         x, y, x_waypoint, y_waypoint, velocity, wt)
-    
-    theta = np.arctan2(y_waypoint - y, x_waypoint - x)
-    costheta = np.cos(theta)
-    sintheta = np.sin(theta)
-    
-    while True:
-        # update node position
-        x += velocity * costheta
-        y += velocity * sintheta
-        # calculate distance to waypoint
-        d = np.sqrt(np.square(y_waypoint-y) + np.square(x_waypoint-x))
-        # update info for arrived nodes
-        arrived = np.where(np.logical_and(d<=velocity, wt<=0.))[0]
+    def __init__(self, nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
+        '''
+        Random Waypoint model.
         
-        # step back for nodes that surpassed waypoint
-        x[arrived] = x_waypoint[arrived]
-        y[arrived] = y_waypoint[arrived]
+        Required arguments:
         
-        if wt_max:
-            velocity[arrived] = 0.
-            wt[arrived] = U(0, wt_max, arrived)
-            # update info for paused nodes
-            wt[np.where(velocity==0.)[0]] -= 1.
-            # update info for moving nodes
-            arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
+          *nr_nodes*:
+            Integer, the number of nodes.
+          
+          *dimensions*:
+            Tuple of Integers, the x and y dimensions of the simulation area.
+          
+        keyword arguments:
         
-        if arrived.size > 0:
-            x_waypoint[arrived] = U(0, MAX_X, arrived)
-            y_waypoint[arrived] = U(0, MAX_Y, arrived)
-            velocity[arrived] = U(MIN_V, MAX_V, arrived)
-            theta[arrived] = np.arctan2(y_waypoint[arrived] - y[arrived], x_waypoint[arrived] - x[arrived])
-            costheta[arrived] = np.cos(theta[arrived])
-            sintheta[arrived] = np.sin(theta[arrived])
+          *velocity*:
+            Tuple of Integers, the minimum and maximum values for node velocity.
+          
+          *wt_max*:
+            Integer, the maximum wait time for node pauses.
+            If wt_max is 0 or None, there is no pause time.
+        '''
         
-        yield np.dstack((x,y))[0]
+        self.nr_nodes = nr_nodes
+        self.dimensions = dimensions
+        self.velocity = velocity
+        self.wt_max = wt_max
+    
+    def __iter__(self):
+        
+
+        
+        MAX_X,MAX_Y = self.dimensions
+        MIN_V, MAX_V = self.velocity
+        
+        wt_min = 0.
+        
+        NODES = np.arange(self.nr_nodes)
+        x = U(0, MAX_X, NODES)
+        y = U(0, MAX_Y, NODES)
+        x_waypoint = U(0, MAX_X, NODES)
+        y_waypoint = U(0, MAX_Y, NODES)
+        wt = np.zeros(self.nr_nodes)
+        velocity = U(MIN_V, MAX_V, NODES)
+        
+        init_random_waypoint(self.nr_nodes, MAX_X, MAX_Y, MIN_V, MAX_V, wt_min, 
+                             (self.wt_max if self.wt_max is not None else 0.), 
+                             x, y, x_waypoint, y_waypoint, velocity, wt)
+        
+        theta = np.arctan2(y_waypoint - y, x_waypoint - x)
+        costheta = np.cos(theta)
+        sintheta = np.sin(theta)
+        
+        while True:
+            # update node position
+            x += velocity * costheta
+            y += velocity * sintheta
+            # calculate distance to waypoint
+            d = np.sqrt(np.square(y_waypoint-y) + np.square(x_waypoint-x))
+            # update info for arrived nodes
+            arrived = np.where(np.logical_and(d<=velocity, wt<=0.))[0]
+            
+            # step back for nodes that surpassed waypoint
+            x[arrived] = x_waypoint[arrived]
+            y[arrived] = y_waypoint[arrived]
+            
+            if self.wt_max:
+                velocity[arrived] = 0.
+                wt[arrived] = U(0, self.wt_max, arrived)
+                # update info for paused nodes
+                wt[np.where(velocity==0.)[0]] -= 1.
+                # update info for moving nodes
+                arrived = np.where(np.logical_and(velocity==0., wt<0.))[0]
+            
+            if arrived.size > 0:
+                x_waypoint[arrived] = U(0, MAX_X, arrived)
+                y_waypoint[arrived] = U(0, MAX_Y, arrived)
+                velocity[arrived] = U(MIN_V, MAX_V, arrived)
+                theta[arrived] = np.arctan2(y_waypoint[arrived] - y[arrived], x_waypoint[arrived] - x[arrived])
+                costheta[arrived] = np.cos(theta[arrived])
+                sintheta[arrived] = np.sin(theta[arrived])
+            
+            yield np.dstack((x,y))[0]
 
 class StochasticWalk(object):
     
@@ -497,6 +508,9 @@ class HeterogeneousTruncatedLevyWalk(StochasticWalk):
         
         StochasticWalk.__init__(self, nr_nodes, dimensions, FL_DISTR, VELOCITY_DISTR, WT_DISTR=WT_DISTR, border_policy=border_policy)
         
+def random_waypoint(*args, **kwargs):
+    return iter(RandomWaypoint(*args, **kwargs))
+
 def stochastic_walk(*args, **kwargs):
     return iter(StochasticWalk(*args, **kwargs))
 
