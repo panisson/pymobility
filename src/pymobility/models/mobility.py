@@ -32,28 +32,32 @@ def pause_probability_init(pause_low, pause_high, speed_low, speed_high, max_x, 
     return alpha1/(alpha1+delta1)
 
 # *************** Palm residual ******************************
-def residual_time(mean, delta):
+def residual_time(mean, delta, shape=(1,)):
     t1 = mean - delta;
     t2 = mean + delta;
-    u = rand();
-    if delta!=0.0:
-        if (u < (2.*t1/(t1+t2)) ):
-            residual=u*(t1+t2)/2.
-        else:
-            residual=t2-np.sqrt((1.-u)*(t2*t2 - t1*t1))
+    u = rand(*shape);
+    residual = np.zeros(shape)
+    if delta != 0.0:
+        case_1_u = u < (2.*t1/(t1+t2))
+        residual[case_1_u] = u*(t1+t2)/2.
+        residual[np.logical_not(case_1_u)] = t2-np.sqrt((1.-u)*(t2*t2 - t1*t1))
     else:
         residual=u*mean  
     return residual
 
 # *********** Initial speed ***************************
-def initial_speed(speed_mean, speed_delta):
+def initial_speed(speed_mean, speed_delta, shape=(1,)):
     v0 = speed_mean - speed_delta
     v1 = speed_mean + speed_delta
-    u = rand()
+    u = rand(*shape)
     return pow(v1, u) / pow(v0, u - 1)
 
-def init_random_waypoint(nr_nodes, max_x, max_y, speed_low, speed_high, 
-                         pause_low, pause_high, x, y, x_waypoint, y_waypoint, speed, pause_time):
+def init_random_waypoint(nr_nodes, max_x, max_y,
+                         speed_low, speed_high, pause_low, pause_high,
+                         x, y, x_waypoint, y_waypoint, speed, pause_time):
+
+    speed_low = float(speed_low)
+    speed_high = float(speed_high)
 
     moving = np.ones(nr_nodes)
     speed_mean, speed_delta = (speed_low+speed_high)/2., (speed_high-speed_low)/2.
@@ -84,23 +88,26 @@ def init_random_waypoint(nr_nodes, max_x, max_y, speed_low, speed_high,
                     moving[i] = 1.
                     break
 
-        # steady-state positions
-        # initially the node has traveled a proportion u2 of the path from (x1,y1) to (x2,y2)
-        u2 = rand();
-        x[i] = u2*x1 + (1 - u2)*x2;
-        y[i] = u2*y1 + (1 - u2)*y2;
+        x[i] = x1
+        y[i] = y1
+
         x_waypoint[i] = x2
         y_waypoint[i] = y2
-        
-        # steady-state speed and pause time    
-        if moving[i] == 0.: #node initially paused
-            pause_time[i] = residual_time(pause_mean, pause_delta)
-            speed[i] = 0.0
-          
-        else: #node initially moving
-            pause_time[i] = 0.0
-            #calculate initial node speed
-            speed[i] = initial_speed(speed_mean,speed_delta)
+
+    # steady-state positions
+    # initially the node has traveled a proportion u2 of the path from (x1,y1) to (x2,y2)
+    u2 = rand(*x.shape)
+    x[:] = u2*x + (1 - u2)*x_waypoint
+    y[:] = u2*y + (1 - u2)*y_waypoint
+
+    # steady-state speed and pause time
+    paused_idx = moving==0.
+    pause_time[paused_idx] = residual_time(pause_mean, pause_delta, pause_time.shape)
+    speed[paused_idx] = 0.0
+
+    moving_idx = np.logical_not(paused_idx)
+    pause_time[moving_idx] = 0.0
+    speed[moving_idx] = initial_speed(speed_mean,speed_delta, pause_time.shape)
 
 class RandomWaypoint(object):
     
