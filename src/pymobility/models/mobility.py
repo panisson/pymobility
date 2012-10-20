@@ -133,8 +133,6 @@ class RandomWaypoint(object):
     
     def __iter__(self):
         
-
-        
         MAX_X,MAX_Y = self.dimensions
         MIN_V, MAX_V = self.velocity
         
@@ -185,6 +183,8 @@ class RandomWaypoint(object):
                 costheta[arrived] = np.cos(theta[arrived])
                 sintheta[arrived] = np.sin(theta[arrived])
             
+            self.velocity = velocity
+            self.wt = wt
             yield np.dstack((x,y))[0]
 
 class StochasticWalk(object):
