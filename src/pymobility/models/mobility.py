@@ -53,8 +53,14 @@ def initial_speed(speed_mean, speed_delta, shape=(1,)):
     return pow(v1, u) / pow(v0, u - 1)
 
 def init_random_waypoint(nr_nodes, max_x, max_y,
-                         speed_low, speed_high, pause_low, pause_high,
-                         x, y, x_waypoint, y_waypoint, speed, pause_time):
+                         speed_low, speed_high, pause_low, pause_high):
+
+    x = np.empty(nr_nodes)
+    y = np.empty(nr_nodes)
+    x_waypoint = np.empty(nr_nodes)
+    y_waypoint = np.empty(nr_nodes)
+    speed = np.empty(nr_nodes)
+    pause_time = np.empty(nr_nodes)
 
     speed_low = float(speed_low)
     speed_high = float(speed_high)
@@ -111,6 +117,8 @@ def init_random_waypoint(nr_nodes, max_x, max_y,
     pause_time[moving_idx] = 0.0
     speed[moving_idx] = initial_speed(speed_mean,speed_delta, moving_idx.shape)
 
+    return x,y,x_waypoint,y_waypoint,speed,pause_time
+
 class RandomWaypoint(object):
     
     def __init__(self, nr_nodes, dimensions, velocity=(0.1, 1.), wt_max=None):
@@ -139,6 +147,7 @@ class RandomWaypoint(object):
         self.dimensions = dimensions
         self.velocity = velocity
         self.wt_max = wt_max
+        self.init_stationary = True
     
     def __iter__(self):
         
@@ -147,18 +156,22 @@ class RandomWaypoint(object):
         
         wt_min = 0.
         
-        NODES = np.arange(self.nr_nodes)
-        x = U(0, MAX_X, NODES)
-        y = U(0, MAX_Y, NODES)
-        x_waypoint = U(0, MAX_X, NODES)
-        y_waypoint = U(0, MAX_Y, NODES)
-        wt = np.zeros(self.nr_nodes)
-        velocity = U(MIN_V, MAX_V, NODES)
-        
-        init_random_waypoint(self.nr_nodes, MAX_X, MAX_Y, MIN_V, MAX_V, wt_min, 
-                             (self.wt_max if self.wt_max is not None else 0.), 
-                             x, y, x_waypoint, y_waypoint, velocity, wt)
-        
+        if self.init_stationary:
+
+            x, y, x_waypoint, y_waypoint, velocity, wt = \
+                init_random_waypoint(self.nr_nodes, MAX_X, MAX_Y, MIN_V, MAX_V, wt_min, 
+                             (self.wt_max if self.wt_max is not None else 0.))
+
+        else:
+
+            NODES = np.arange(self.nr_nodes)
+            x = U(0, MAX_X, NODES)
+            y = U(0, MAX_Y, NODES)
+            x_waypoint = U(0, MAX_X, NODES)
+            y_waypoint = U(0, MAX_Y, NODES)
+            wt = np.zeros(self.nr_nodes)
+            velocity = U(MIN_V, MAX_V, NODES)
+
         theta = np.arctan2(y_waypoint - y, x_waypoint - x)
         costheta = np.cos(theta)
         sintheta = np.sin(theta)
