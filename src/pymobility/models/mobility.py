@@ -39,8 +39,8 @@ def residual_time(mean, delta, shape=(1,)):
     residual = np.zeros(shape)
     if delta != 0.0:
         case_1_u = u < (2.*t1/(t1+t2))
-        residual[case_1_u] = u*(t1+t2)/2.
-        residual[np.logical_not(case_1_u)] = t2-np.sqrt((1.-u)*(t2*t2 - t1*t1))
+        residual[case_1_u] = u[case_1_u]*(t1+t2)/2.
+        residual[np.logical_not(case_1_u)] = t2-np.sqrt((1.-u[np.logical_not(case_1_u)])*(t2*t2 - t1*t1))
     else:
         residual=u*mean  
     return residual
@@ -77,6 +77,12 @@ def init_random_waypoint(nr_nodes, max_x, max_y,
         while True:
             if rand() < q0:
                 moving[i] = 0.
+                # M_0
+                x1 = rand()*max_x
+                x2 = rand()*max_x
+                # M_1
+                y1 = rand()*max_y
+                y2 = rand()*max_y
                 break
             else:
                 # M_0
