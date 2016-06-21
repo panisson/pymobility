@@ -268,32 +268,22 @@ class StochasticWalk(object):
     def __iter__(self):
         def reflect(xy):
             # node bounces on the margins
-            b = np.where(xy[:,0]<0)[0]
-            if b.size > 0:
-                xy[b,0] = - xy[b,0]
-                cosintheta[b,0] = -cosintheta[b,0]
-            b = np.where(xy[:,0]>MAX_X)[0]
-            if b.size > 0:
-                xy[b,0] = 2*MAX_X - xy[b,0]
-                cosintheta[b,0] = -cosintheta[b,0]
-            b = np.where(xy[:,1]<0)[0]
-            if b.size > 0:
-                xy[b,1] = - xy[b,1]
-                cosintheta[b,1] = -cosintheta[b,1]
-            b = np.where(xy[:,1]>MAX_Y)[0]
-            if b.size > 0:
-                xy[b,1] = 2*MAX_Y - xy[b,1]
-                cosintheta[b,1] = -cosintheta[b,1]
+            for dim, max_d in enumerate(self.dimensions):
+                b = np.where(xy[:,dim]<0)[0]
+                if b.size > 0:
+                    xy[b,dim] = - xy[b,dim]
+                    movement[b,dim] = -movement[b,dim]
+                b = np.where(xy[:,dim]>max_d)[0]
+                if b.size > 0:
+                    xy[b,dim] = 2*max_d - xy[b,dim]
+                    movement[b,dim] = -movement[b,dim]
         
         def wrap(xy):
-            b = np.where(xy[:,0]<0)[0]
-            if b.size > 0: xy[b,0] += MAX_X
-            b = np.where(xy[:,0]>MAX_X)[0]
-            if b.size > 0: xy[b,0] -= MAX_X
-            b = np.where(xy[:,1]<0)[0]
-            if b.size > 0: xy[b,1] += MAX_Y
-            b = np.where(xy[:,1]>MAX_Y)[0]
-            if b.size > 0: xy[b,1] -= MAX_Y
+            for dim, max_d in enumerate(self.dimensions):
+                b = np.where(xy[:,dim]<0)[0]
+                if b.size > 0: xy[b,dim] += max_d
+                b = np.where(xy[:,dim]>max_d)[0]
+                if b.size > 0: xy[b,dim] -= max_d
         
         if self.border_policy == 'reflect':
             borderp = reflect
@@ -302,28 +292,35 @@ class StochasticWalk(object):
         else:
             borderp = self.border_policy
         
-        MAX_X, MAX_Y = self.dimensions
+        ndim = len(self.dimensions)
         NODES = np.arange(self.nr_nodes)
-        xy = U(0, MAX_X, np.dstack((NODES,NODES))[0])
+
+        # assign node's positions, flight lengths and velocities
+        xy = U(np.zeros(ndim), np.array(self.dimensions), np.dstack((NODES,)*ndim)[0])
         fl = self.FL_DISTR(NODES)
         velocity = self.VELOCITY_DISTR(fl)
-        theta = U(0, 2*np.pi, NODES)
-        cosintheta = np.dstack((np.cos(theta), np.sin(theta)))[0] * np.dstack((velocity,velocity))[0]
+
+        # assign nodes' movements (direction * node velocity)
+        direction = U(0., 1., np.zeros((self.nr_nodes, ndim))) - 0.5
+        direction /= np.linalg.norm(direction, axis=1)[:, np.newaxis]
+        movement = direction * velocity[:, np.newaxis]
+
+        # starts with no wating time
         wt = np.zeros(self.nr_nodes)
         
         if self.collect_fl_stats: self.fl_stats = list(fl)
         if  self.collect_wt_stats: self.wt_stats = list(wt)
-        
+
         while True:
     
-            xy += cosintheta
+            xy += movement
             fl -= velocity
             
             # step back for nodes that surpassed fl
             arrived = np.where(np.logical_and(velocity>0., fl<=0.))[0]
             if arrived.size > 0:
                 diff = fl.take(arrived) / velocity.take(arrived)
-                xy[arrived] += np.dstack((diff,diff))[0] * cosintheta[arrived]
+                xy[arrived] += np.dstack((diff,)*ndim)[0] * movement[arrived]
             
             # apply border policy
             borderp(xy)
@@ -338,12 +335,14 @@ class StochasticWalk(object):
             
             # update info for moving nodes
             if arrived.size > 0:
-                theta = U(0, 2*np.pi, arrived)
+                
                 fl[arrived] = self.FL_DISTR(arrived)
                 if self.collect_fl_stats: self.fl_stats.extend(fl[arrived])
                 velocity[arrived] = self.VELOCITY_DISTR(fl[arrived])
                 v = velocity[arrived]
-                cosintheta[arrived] = np.dstack((v * np.cos(theta), v * np.sin(theta)))[0]
+                direction = U(0., 1., np.zeros((arrived.size, ndim))) - 0.5
+                direction /= np.linalg.norm(direction, axis=1)[:, np.newaxis]
+                movement[arrived] = v[:, np.newaxis] * direction
     
             yield xy
 
