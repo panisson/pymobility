@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.9873.svg)](https://doi.org/10.5281/zenodo.9873)
+
 Description
 -----------
 This is a python library for simulation of mobility and contact models.
