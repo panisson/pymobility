@@ -87,25 +87,44 @@ rw = random_walk(nr_nodes, dimensions=(MAX_X, MAX_Y))
 #nr_nodes = sum(groups)
 #tvcm = tvc(groups, dimensions=(MAX_X, MAX_Y), aggregation=[0.5,0.], epoch=[100,100])
 
-for xy in rw:
+def init():
+    global line  
+    line.set_data([], [])   
+    return line
+
+# animation function.  this is called sequentially   
+def animate(xy):
+    global line, rwp, step, DRAW, STEPS_TO_IGNORE, CALCULATE_CONTACTS, ax
+    # xy = next(rwp)
     
+
     step += 1
-    if step%10000==0: logger.info('Step %s'% step)
-    if step < STEPS_TO_IGNORE: continue
-    
-    if DRAW:
-        
-        if CALCULATE_CONTACTS:
-            lnr = 1
-            # calculate the distance between all points represented in the xy matrix
-            d = cdist(xy,xy)
-            for (i,j) in zip(*np.where(d<RANGE)):
-                    if j > i:
-                        ax.lines[lnr].set_data([xy[i,0],xy[j,0]], [xy[i,1],xy[j,1]])
-                        lnr += 1
-            for i in xrange(lnr, 100):
-                ax.lines[i].set_data([],[])
-        
-        line.set_data(xy[:,0],xy[:,1])
-        plt.draw()
+    if step%100==0: logger.info('Step %s'% step)
+    if step < STEPS_TO_IGNORE: 
+        line.set_data([], [])   
+        return line
+    else:
+
+
+        if DRAW:
+            
+            if CALCULATE_CONTACTS:
+                lnr = 1
+                # calculate the distance between all points represented in the xy matrix
+                d = cdist(xy,xy)
+                for (i,j) in zip(*np.where(d<RANGE)):
+                        if j > i:
+                            ax.lines[lnr].set_data([xy[i,0],xy[j,0]], [xy[i,1],xy[j,1]])
+                            lnr += 1
+                for i in xrange(lnr, 100):
+                    ax.lines[i].set_data([],[])
+            
+            line.set_data(xy[:,0],xy[:,1])
+            f=open("positions.csv",'w')
+            dataframe = pd.DataFrame({'x':xy[:,0],'y':xy[:,1]})
+            dataframe.to_csv(f,index=False,sep=',')
+            f.close();
+            return line
+anim1 = animation.FuncAnimation(fig, animate, rwp, init_func=init, interval=5)
+plt.show()
     
